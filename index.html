@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="配管サイズ">
-<title>配管サイズチェッカー</title>
+<title>配管サイズチェッカー v1.8</title>
 <style>
 :root{
   --bg:#f3f6f5;--card:#fff;--ink:#17221f;--muted:#60706a;--line:#d7e0dc;
@@ -135,13 +135,17 @@ a{color:#086a53}
         <option value="E">ねじなし電線管 E</option>
         <option value="C">薄鋼電線管 C</option>
         <option value="G">厚鋼電線管 G</option>
-        <option value="MANUAL">PF・CD・VE・その他（内径手入力）</option>
+        <option value="PFS">PF管 PFS（1.5重管）</option>
+        <option value="PFD">PF管 PFD（2重管）</option>
+        <option value="CD">CD管</option>
+        <option value="VE">硬質ビニル電線管 VE</option>
+        <option value="MANUAL">その他（内径手入力）</option>
       </select>
     </div>
     <div id="sizeBox"><label for="conduitSize">確認する呼び</label><select id="conduitSize"></select></div>
   </div>
   <div id="manualBox" class="grid hidden" style="margin-top:10px">
-    <div><label for="manualName">管名称・呼び</label><input id="manualName" placeholder="例：PF28"></div>
+    <div><label for="manualName">管名称・呼び</label><input id="manualName" placeholder="例：FEP50、金属可とう管など"></div>
     <div><label for="manualId">実内径（mm）</label><input id="manualId" type="number" min="1" step="0.1" placeholder="メーカー値を入力"></div>
   </div>
   <p class="note" id="dimensionNote"></p>
@@ -187,8 +191,8 @@ a{color:#086a53}
     <p class="note">丸形電線は π×（仕上外径÷2）²、平形電線は外形をカプセル形として近似し、本数を乗じます。管内面積＝π×（内径÷2）²。占積率＝電線合計面積÷管内面積×100。</p>
   </details>
   <details><summary>電線・電線管の寸法データ</summary>
-    <p class="note">IV、EM-IE/F、VVF、EM-EEF/F、CV、CVT、EM-CE/F、EM-CEE/Fなどの主要寸法はSWCC・SFCCの公開カタログを基礎に登録しています。HPは国土交通省「土木工事標準積算基準書（電気通信編）等の運用（令和8年3月）」別表の参考仕上外径を登録し、0.65・0.9・1.2・1.6mmの対より形は40Pまで選べます。電線外径はメーカー・型式で異なるため、実使用品の仕様書を優先してください。E・C・G管はPanasonic公式資料の外径・厚さから参考内径を算出しています。</p>
-    <p class="note"><a href="https://www.swcc.co.jp/sfcc/products/pdf/SFCC_Catlog_S_web.pdf" target="_blank" rel="noopener">SWCC・SFCC 産業用電線・ケーブルカタログ</a><br><a href="https://www.mlit.go.jp/tec/it/denki/content/densekisankijuntouunyoR0803.pdf" target="_blank" rel="noopener">国土交通省 電線・ケーブル参考仕上外径（令和8年3月）</a><br><a href="https://www2.panasonic.biz/jp/terasu/skill/iroha/book/nonresidential/pdf/part3.pdf" target="_blank" rel="noopener">Panasonic 配管材について</a></p>
+    <p class="note">IV、EM-IE/F、VVF、EM-EEF/F、CV、CVT、EM-CE/F、EM-CEE/Fなどの主要寸法はSWCC・SFCCの公開カタログを基礎に登録しています。HPは国土交通省「土木工事標準積算基準書（電気通信編）等の運用（令和8年3月）」別表の参考仕上外径を登録し、0.65・0.9・1.2・1.6mmの対より形は40Pまで選べます。電線外径はメーカー・型式で異なるため、実使用品の仕様書を優先してください。E・C・G管はPanasonic公式資料の外径・厚さから参考内径を算出しています。PF管はPFS（1.5重管）とPFD（2重管）に分け、CD管とともにPanasonic公式の参考内径を登録しています。VE管はJIS C 8430:2019の概略内径を登録しています。</p>
+    <p class="note"><a href="https://www.swcc.co.jp/sfcc/products/pdf/SFCC_Catlog_S_web.pdf" target="_blank" rel="noopener">SWCC・SFCC 産業用電線・ケーブルカタログ</a><br><a href="https://www.mlit.go.jp/tec/it/denki/content/densekisankijuntouunyoR0803.pdf" target="_blank" rel="noopener">国土交通省 電線・ケーブル参考仕上外径（令和8年3月）</a><br><a href="https://www2.panasonic.biz/jp/terasu/skill/iroha/book/nonresidential/pdf/part3.pdf" target="_blank" rel="noopener">Panasonic 配管材について</a><br><a href="https://www2.panasonic.biz/jp/densetsu/haikan/conduit/synthetic_resin_flexible_conduit/pf.html" target="_blank" rel="noopener">Panasonic PF管（PFS・PFD）寸法</a><br><a href="https://www2.panasonic.biz/jp/densetsu/haikan/conduit/synthetic_resin_flexible_conduit/cd.html" target="_blank" rel="noopener">Panasonic CD管寸法</a><br><a href="https://webdesk.jsa.or.jp/books/W11M0090/index/?bunsyo_id=JIS+C+8430%3A2019" target="_blank" rel="noopener">JIS C 8430:2019（VE管）</a></p>
   </details>
   <details><summary>重要な注意事項</summary>
     <p class="note">本アプリは一次選定・照合用です。法令適合、許容電流、電圧降下、放熱、施工性、引入れ長さ、曲がり数、防火区画、接地、使用場所などを保証しません。正式な設計・施工では現行の内線規程および仕様書を優先してください。</p>
@@ -200,7 +204,7 @@ a{color:#086a53}
 </main>
 
 <footer><div class="foot-inner">
-  配管サイズチェッカー v1.6｜端末内保存のみ。入力内容を外部送信しません。
+  配管サイズチェッカー v1.8｜端末内保存のみ。入力内容を外部送信しません。
 </div></footer>
 
 <script>
@@ -220,9 +224,25 @@ const conduitData={
   {name:"G16",od:21.0,t:2.3},{name:"G22",od:26.5,t:2.3},{name:"G28",od:33.3,t:2.5},
   {name:"G36",od:41.9,t:2.5},{name:"G42",od:47.8,t:2.5},{name:"G54",od:59.6,t:2.8},
   {name:"G70",od:75.2,t:2.8},{name:"G82",od:87.9,t:2.8},{name:"G92",od:100.7,t:3.5},{name:"G104",od:113.4,t:3.5}
+ ],
+ PFS:[
+  {name:"PF14",id:14.0},{name:"PF16",id:16.0},{name:"PF22",id:22.0},
+  {name:"PF28",id:28.0},{name:"PF36",id:36.0}
+ ],
+ PFD:[
+  {name:"PF16",id:16.0},{name:"PF22",id:22.0},{name:"PF28",id:28.0}
+ ],
+ CD:[
+  {name:"CD14",id:14.0},{name:"CD16",id:16.0},{name:"CD22",id:22.0},
+  {name:"CD28",id:28.0},{name:"CD36",id:36.0}
+ ],
+ VE:[
+  {name:"VE14",id:14.0},{name:"VE16",id:18.0},{name:"VE22",id:22.0},
+  {name:"VE28",id:28.0},{name:"VE36",id:35.0},{name:"VE42",id:40.0},
+  {name:"VE54",id:51.0},{name:"VE70",id:67.0},{name:"VE82",id:77.0}
  ]
 };
-Object.values(conduitData).flat().forEach(x=>x.id=+(x.od-2*x.t).toFixed(2));
+Object.values(conduitData).flat().forEach(x=>{if(x.id==null)x.id=+(x.od-2*x.t).toFixed(2);});
 
 const $=id=>document.getElementById(id);
 const rows=$("cableRows");
@@ -343,7 +363,16 @@ function renderConduitSizes(){
  $("sizeListCard").classList.toggle("hidden",manual);
  if(!manual){
   $("conduitSize").innerHTML=conduitData[type].map((x,i)=>`<option value="${i}">${x.name}（参考内径 ${x.id.toFixed(1)}mm）</option>`).join("");
-  $("dimensionNote").textContent="参考内径はメーカー公式の外径・厚さから算出しています。";
+  const notes={
+   E:"参考内径はメーカー公式の外径・厚さから算出しています。",
+   C:"参考内径はメーカー公式の外径・厚さから算出しています。",
+   G:"参考内径はメーカー公式の外径・厚さから算出しています。",
+   PFS:"PF管 PFS（1.5重管）。Panasonic製品の参考内径を登録しています（14・16・22・28・36）。",
+   PFD:"PF管 PFD（2重管）。Panasonic製品の参考内径を登録しています（16・22・28）。",
+   CD:"CD管。Panasonic製品の参考内径を登録しています（14・16・22・28・36）。自己消火性がなく、コンクリート埋め込み専用です。",
+   VE:"硬質ビニル電線管VE。JIS C 8430:2019の概略内径を登録しています（VE14～VE82）。"
+  };
+  $("dimensionNote").textContent=notes[type]||"参考内径を使用しています。";
  }else{
   $("dimensionNote").textContent="実際に使用する管メーカーの最新カタログに記載された内径を入力してください。";
  }
@@ -398,7 +427,7 @@ function renderSizeList(total,limit){
 }
 function state(){
  return {
-  version:4,project:$("project").value,limit:$("limit").value,customLimit:$("customLimit").value,
+  version:5,project:$("project").value,limit:$("limit").value,customLimit:$("customLimit").value,
   conduitType:$("conduitType").value,conduitSize:$("conduitSize").value,
   manualName:$("manualName").value,manualId:$("manualId").value,
   wires:getWires().map(w=>({typeKey:w.typeKey,sizeIndex:w.sizeIndex,count:w.count||1,manualLabel:w.manualLabel||"",manualDiameter:w.manualDiameter||""}))
@@ -412,8 +441,16 @@ function applyState(s){
  }
  $("project").value=s.project||"";$("limit").value=s.limit||"32";$("customLimit").value=s.customLimit||32;
  $("customLimitBox").classList.toggle("hidden",$("limit").value!=="custom");
- $("conduitType").value=s.conduitType||"E";renderConduitSizes();
- if(s.conduitSize!=null)$("conduitSize").value=s.conduitSize;
+ let savedConduitType=s.conduitType||"E";
+ if(savedConduitType==="PF1") savedConduitType="PFS";
+ if(savedConduitType==="PF2") savedConduitType="PFD";
+ if(savedConduitType!=="MANUAL"&&!conduitData[savedConduitType]) savedConduitType="E";
+ $("conduitType").value=savedConduitType;renderConduitSizes();
+ if(s.conduitSize!=null&&savedConduitType!=="MANUAL"){
+  const maxIndex=conduitData[savedConduitType].length-1;
+  const savedIndex=Math.max(0,Math.min(maxIndex,Number(s.conduitSize)||0));
+  $("conduitSize").value=String(savedIndex);
+ }
  $("manualName").value=s.manualName||"";$("manualId").value=s.manualId||"";
  rows.innerHTML="";(s.wires?.length?s.wires:[{}]).forEach(addCableRow);calculate();
 }
