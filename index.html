@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="配管サイズ">
-<title>配管サイズチェッカー v2.0</title>
+<title>配管サイズチェッカー v2.1</title>
 <style>
 :root{
   --bg:#f3f6f5;--card:#fff;--ink:#17221f;--muted:#60706a;--line:#d7e0dc;
@@ -139,6 +139,7 @@ a{color:#086a53}
         <option value="PFD">PF管 PFD（2重管）</option>
         <option value="CD">CD管</option>
         <option value="VE">硬質ビニル電線管 VE</option>
+        <option value="KMV">ケイフレックス KMV</option>
         <option value="MANUAL">その他（内径手入力）</option>
       </select>
     </div>
@@ -191,7 +192,7 @@ a{color:#086a53}
     <p class="note">丸形電線は π×（仕上外径÷2）²、平形電線は外形をカプセル形として近似し、本数を乗じます。管内面積＝π×（内径÷2）²。占積率＝電線合計面積÷管内面積×100。</p>
   </details>
   <details><summary>電線・電線管の寸法データ</summary>
-    <p class="note">IV、EM-IE/F、VVF、EM-EEF/F、CV、CVT、EM-CE/F、EM-CEE/Fなどの主要寸法はSWCC・SFCCの公開カタログを基礎に登録しています。HPは国土交通省「土木工事標準積算基準書（電気通信編）等の運用（令和8年3月）」別表の参考仕上外径を登録し、0.65・0.9・1.2・1.6mmの対より形は40Pまで選べます。電線外径はメーカー・型式で異なるため、実使用品の仕様書を優先してください。E・C・G管はPanasonic公式資料の外径・厚さから参考内径を算出しています。PF管はPFS（1.5重管）とPFD（2重管）に分け、CD管とともにPanasonic公式の参考内径を登録しています。VE管はJIS C 8430:2019の概略内径を登録しています。</p>
+    <p class="note">IV、EM-IE/F、VVF、EM-EEF/F、CV、CVT、EM-CE/F、EM-CEE/Fなどの主要寸法はSWCC・SFCCの公開カタログを基礎に登録しています。HPは国土交通省「土木工事標準積算基準書（電気通信編）等の運用（令和8年3月）」別表の参考仕上外径を登録し、0.65・0.9・1.2・1.6mmの対より形は40Pまで選べます。電線外径はメーカー・型式で異なるため、実使用品の仕様書を優先してください。E・C・G管はPanasonic公式資料の外径・厚さから参考内径を算出しています。PF管はPFS（1.5重管）とPFD（2重管）に分け、CD管とともにPanasonic公式の参考内径を登録しています。VE管はJIS C 8430:2019の概略内径を登録しています。KMVは三桂製作所の納入仕様書／完成図に記載された最小内径を登録しています。</p>
     <p class="note"><a href="https://www.swcc.co.jp/sfcc/products/pdf/SFCC_Catlog_S_web.pdf" target="_blank" rel="noopener">SWCC・SFCC 産業用電線・ケーブルカタログ</a><br><a href="https://www.mlit.go.jp/tec/it/denki/content/densekisankijuntouunyoR0803.pdf" target="_blank" rel="noopener">国土交通省 電線・ケーブル参考仕上外径（令和8年3月）</a><br><a href="https://www2.panasonic.biz/jp/terasu/skill/iroha/book/nonresidential/pdf/part3.pdf" target="_blank" rel="noopener">Panasonic 配管材について</a><br><a href="https://www2.panasonic.biz/jp/densetsu/haikan/conduit/synthetic_resin_flexible_conduit/pf.html" target="_blank" rel="noopener">Panasonic PF管（PFS・PFD）寸法</a><br><a href="https://www2.panasonic.biz/jp/densetsu/haikan/conduit/synthetic_resin_flexible_conduit/cd.html" target="_blank" rel="noopener">Panasonic CD管寸法</a><br><a href="https://webdesk.jsa.or.jp/books/W11M0090/index/?bunsyo_id=JIS+C+8430%3A2019" target="_blank" rel="noopener">JIS C 8430:2019（VE管）</a></p>
   </details>
   <details><summary>重要な注意事項</summary>
@@ -204,7 +205,7 @@ a{color:#086a53}
 </main>
 
 <footer><div class="foot-inner">
-  配管サイズチェッカー v2.0｜端末内保存のみ。入力内容を外部送信しません。
+  配管サイズチェッカー v2.1｜端末内保存のみ。入力内容を外部送信しません。
 </div></footer>
 
 <script>
@@ -240,6 +241,12 @@ const conduitData={
   {name:"VE14",id:14.0},{name:"VE16",id:18.0},{name:"VE22",id:22.0},
   {name:"VE28",id:28.0},{name:"VE36",id:35.0},{name:"VE42",id:40.0},
   {name:"VE54",id:51.0},{name:"VE70",id:67.0},{name:"VE82",id:77.0}
+ ],
+ KMV:[
+  {name:"KMV10",id:10.0},{name:"KMV12",id:12.3},{name:"KMV16",id:15.8},
+  {name:"KMV22",id:20.8},{name:"KMV28",id:26.4},{name:"KMV36",id:35.0},
+  {name:"KMV42",id:40.0},{name:"KMV54",id:51.3},{name:"KMV70",id:63.0},
+  {name:"KMV82",id:78.0}
  ]
 };
 Object.values(conduitData).flat().forEach(x=>{if(x.id==null)x.id=+(x.od-2*x.t).toFixed(2);});
@@ -247,10 +254,27 @@ Object.values(conduitData).flat().forEach(x=>{if(x.id==null)x.id=+(x.od-2*x.t).t
 const $=id=>document.getElementById(id);
 const rows=$("cableRows");
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
+function wireTypeLabel(type){
+ // 電線種類は記号だけを表示。電圧・説明文・括弧内の数字は表示しない。
+ // ただし、2心・3心などの芯数は残し、「心」を「芯」に統一する。
+ const baseMap={
+  EM_IE:"EM-IE/F",EM_LMFC:"EM-LMFC",
+  EM_EEF_2:"EM-EEF/F",EM_EEF_3:"EM-EEF/F",EM_EEF_4:"EM-EEF/F",
+  EM_CE_1:"EM-CE/F",EM_CE_2:"EM-CE/F",EM_CE_3:"EM-CE/F",EM_CE_4:"EM-CE/F",
+  EM_CED:"EM-CED/F",EM_CET:"EM-CET/F",
+  EM_CEE_2:"EM-CEE/F",EM_CEE_3:"EM-CEE/F",EM_CEE_4:"EM-CEE/F",EM_CEE_5:"EM-CEE/F",
+  EM_CEE_6:"EM-CEE/F",EM_CEE_7:"EM-CEE/F",EM_CEE_8:"EM-CEE/F",EM_CEE_10:"EM-CEE/F",
+  EM_CEE_12:"EM-CEE/F",EM_CEE_15:"EM-CEE/F",EM_CEE_20:"EM-CEE/F",EM_CEE_30:"EM-CEE/F",
+  CVVS:"CVV-S",EM_CEES:"EM-CEE/F-S",FP:"FP-C",MANUAL:"MANUAL"
+ };
+ const base=baseMap[type.key]||(type.key.replace(/_\d+$/,""));
+ const core=String(type.label||"").match(/(\d+)\s*心/);
+ return core?`${base} ${core[1]}芯`:base;
+}
 function typeOptions(selected=""){
  // iPhone Safariとの相性を優先し、optgroupを使わず単純な選択肢にする
  const placeholder=`<option value=""${selected?"":" selected"}>電線種類を選択</option>`;
- const options=wireCatalog.map(t=>`<option value="${t.key}"${t.key===selected?" selected":""}>【${esc(t.group)}】${esc(t.label)}</option>`).join("");
+ const options=wireCatalog.map(t=>`<option value="${t.key}"${t.key===selected?" selected":""}>${esc(wireTypeLabel(t))}</option>`).join("");
  return placeholder+options;
 }
 function countOptions(selected=1){return Array.from({length:100},(_,i)=>i+1).map(n=>`<option value="${n}" ${n===Number(selected)?"selected":""}>${n}本</option>`).join("")}
@@ -344,7 +368,8 @@ function getWires(){
   const manualLabel=tr.querySelector(".manual-label")?.value||tr.dataset.manualLabel||"";
   const manualDiameter=Number(tr.querySelector(".manual-dia")?.value||tr.dataset.manualDiameter)||0;
   if(!type||!item)return {typeKey:"",sizeIndex:null,name:"",item:null,manualLabel:"",manualDiameter:0,count,unitArea:0,tr};
-  const name=item.shape==="manual"?(manualLabel||`${type.label}・手入力`):`${type.label} ${item.label}`;
+  const shownType=wireTypeLabel(type);
+  const name=item.shape==="manual"?(manualLabel||`${shownType}・手入力`):`${shownType} ${item.label}`;
   return {typeKey:type.key,sizeIndex:idx,name,item,manualLabel,manualDiameter,count,unitArea:wireItemArea(item,manualDiameter),tr};
  });
 }
@@ -370,7 +395,8 @@ function renderConduitSizes(){
    PFS:"PF管 PFS（1.5重管）。Panasonic製品の参考内径を登録しています（14・16・22・28・36）。",
    PFD:"PF管 PFD（2重管）。Panasonic製品の参考内径を登録しています（16・22・28）。",
    CD:"CD管。Panasonic製品の参考内径を登録しています（14・16・22・28・36）。自己消火性がなく、コンクリート埋め込み専用です。",
-   VE:"硬質ビニル電線管VE。JIS C 8430:2019の概略内径を登録しています（VE14～VE82）。"
+   VE:"硬質ビニル電線管VE。JIS C 8430:2019の概略内径を登録しています（VE14～VE82）。",
+   KMV:"ケイフレックス KMV。三桂製作所の納入仕様書／完成図（2020年8月28日）に記載された最小内径を登録しています（KMV10～KMV82）。"
   };
   $("dimensionNote").textContent=notes[type]||"参考内径を使用しています。";
  }else{
@@ -427,7 +453,7 @@ function renderSizeList(total,limit){
 }
 function state(){
  return {
-  version:7,project:$("project").value,limit:$("limit").value,customLimit:$("customLimit").value,
+  version:8,project:$("project").value,limit:$("limit").value,customLimit:$("customLimit").value,
   conduitType:$("conduitType").value,conduitSize:$("conduitSize").value,
   manualName:$("manualName").value,manualId:$("manualId").value,
   wires:getWires().map(w=>({typeKey:w.typeKey,sizeIndex:w.sizeIndex,count:w.count||1,manualLabel:w.manualLabel||"",manualDiameter:w.manualDiameter||""}))
