@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b6b52">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="配管サイズ">
+<title>配管サイズチェッカー</title>
+<style>
+:root{
+  --bg:#f3f6f5;--card:#fff;--ink:#17221f;--muted:#60706a;--line:#d7e0dc;
+  --main:#0b6b52;--main2:#e2f2ed;--ok:#087443;--ng:#b42318;--warn:#9a6700;
+  --shadow:0 8px 24px rgba(21,48,40,.08)
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.55}
+header{background:linear-gradient(135deg,#075d48,#0b8061);color:#fff;padding:18px 16px 22px;position:sticky;top:0;z-index:10;box-shadow:0 3px 18px rgba(0,0,0,.13)}
+header .inner,main,.foot-inner{max-width:980px;margin:auto}
+h1{font-size:22px;margin:0 0 3px}.subtitle{font-size:13px;opacity:.9}
+main{padding:14px 12px 34px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px;box-shadow:var(--shadow)}
+h2{font-size:17px;margin:0 0 12px} h3{font-size:15px;margin:12px 0 8px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+label{display:block;font-size:12px;font-weight:700;color:#42534d;margin-bottom:4px}
+input,select,button,textarea{font:inherit}
+input,select{width:100%;min-height:44px;border:1px solid #becbc6;border-radius:10px;background:#fff;padding:9px 10px;color:var(--ink)}
+input:focus,select:focus{outline:3px solid rgba(11,107,82,.14);border-color:var(--main)}
+button{border:0;border-radius:10px;min-height:43px;padding:8px 12px;font-weight:750;cursor:pointer}
+.btn-main{background:var(--main);color:#fff}.btn-sub{background:var(--main2);color:#075d48}.btn-light{background:#eef2f0;color:#34443e}.btn-danger{background:#fff0ee;color:var(--ng)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.note{font-size:12px;color:var(--muted);margin:7px 0 0}
+.warning{background:#fff7df;border:1px solid #ead596;border-radius:11px;padding:10px 12px;font-size:12px;color:#5f4800}
+table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;font-size:13px;vertical-align:middle}
+th{font-size:11px;color:#53655e;background:#f7f9f8;position:sticky;top:0}
+.cable-table input,.cable-table select{min-height:40px;padding:7px 8px}
+.cable-table .wire-type{min-width:230px}.cable-table .wire-size{min-width:145px}.cable-table .wire-count{min-width:72px}.cable-table .manual-label{min-width:135px}.cable-table .manual-dia{min-width:78px}
+.icon-btn{min-width:40px;padding:5px;background:#fff0ee;color:var(--ng)}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+.result-main{display:grid;grid-template-columns:1.1fr 1fr;gap:10px}
+.metric{border-radius:13px;padding:12px;background:#f5f8f7;border:1px solid var(--line)}
+.metric .k{font-size:12px;color:var(--muted)}.metric .v{font-size:25px;font-weight:850;margin-top:3px}.metric .s{font-size:11px;color:var(--muted)}
+.status{display:inline-block;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800}
+.ok{background:#ddf5e8;color:var(--ok)}.ng{background:#fee4e2;color:var(--ng)}.warn{background:#fff2cc;color:var(--warn)}
+.recommend{background:linear-gradient(135deg,#e5f5ef,#f8fcfa);border:1px solid #9acdbb;border-radius:14px;padding:13px;margin-top:10px}
+.recommend strong{font-size:21px;color:#075d48}
+.small{font-size:11px;color:var(--muted)}
+.hidden{display:none!important}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fafcfb} details+details{margin-top:8px}
+summary{font-weight:750;cursor:pointer}
+footer{padding:0 12px 28px}.foot-inner{font-size:11px;color:#62716c}
+a{color:#086a53}
+@media(max-width:680px){
+  .grid,.grid3,.result-main{grid-template-columns:1fr}
+  h1{font-size:20px}
+  .card{border-radius:14px;padding:13px}
+  th,td{padding:7px 5px}
+
+  /* スマホでは電線入力を横長表から縦型カードへ変更 */
+  .cable-wrap{overflow:visible;border:0;background:transparent}
+  .cable-table,.cable-table tbody{display:block;width:100%}
+  .cable-table thead{display:none}
+  .cable-table tr{display:block;width:100%;margin:0 0 12px;padding:10px;border:1px solid var(--line);border-radius:13px;background:#f9fbfa;box-shadow:0 3px 10px rgba(21,48,40,.05)}
+  .cable-table td{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:8px;width:100%;padding:7px 0;border:0;border-bottom:1px solid #e4ebe8}
+  .cable-table td:last-child,.cable-table td.no-print{border-bottom:0}
+  .cable-table td::before{content:attr(data-label);font-size:12px;font-weight:750;color:#53655e}
+  .cable-table td.no-print{display:block;padding:9px 0 0}
+  .cable-table td.no-print::before{display:none}
+  .cable-table select,.cable-table input{width:100%;min-width:0!important;min-height:48px;font-size:16px;padding:9px 10px;position:relative;z-index:2;touch-action:manipulation;-webkit-appearance:menulist;appearance:auto}
+  .cable-table .wire-dimension>div{display:grid!important;grid-template-columns:minmax(0,1fr) 102px;gap:6px!important;min-width:0!important;width:100%}
+  .cable-table .icon-btn{width:100%;min-height:44px}
+}
+@media print{
+  header{position:static;background:#fff;color:#000;box-shadow:none;border-bottom:2px solid #000}
+  body{background:#fff}.card{box-shadow:none;break-inside:avoid}
+  .no-print,.icon-btn{display:none!important}
+  main{max-width:none;padding:10mm}.foot-inner{max-width:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="inner">
+    <h1>配管サイズチェッカー</h1>
+    <div class="subtitle">電線の仕上外径から管内占積率を計算｜オフライン対応</div>
+  </div>
+</header>
+
+<main>
+<section class="card">
+  <h2>1．案件・判定条件</h2>
+  <div class="grid">
+    <div><label for="project">案件名</label><input id="project" placeholder="例：○○施設 幹線改修"></div>
+    <div><label for="limit">判定上限</label>
+      <select id="limit">
+        <option value="32">32％（基本確認用）</option>
+        <option value="48">48％（適用条件を規程で確認）</option>
+        <option value="custom">任意の値</option>
+      </select>
+    </div>
+  </div>
+  <div id="customLimitBox" class="grid hidden" style="margin-top:10px">
+    <div><label for="customLimit">任意の上限（％）</label><input id="customLimit" type="number" min="1" max="90" step="0.1" value="32"></div>
+  </div>
+  <div class="warning" style="margin-top:10px">
+    32％・48％の使い分けは、電線種別・本数・屈曲条件などで変わります。最終判断は現行の内線規程、設計仕様書、メーカー資料で確認してください。
+  </div>
+</section>
+
+<section class="card">
+  <h2>2．電線・ケーブル</h2>
+  <div class="table-wrap cable-wrap">
+    <table class="cable-table">
+      <thead><tr><th>電線種類</th><th>サイズ</th><th>本数</th><th>参考外形</th><th>小計面積<br>mm²</th><th class="no-print"></th></tr></thead>
+      <tbody id="cableRows"></tbody>
+    </table>
+  </div>
+  <div class="actions no-print">
+    <button class="btn-sub" id="addCable">＋ 電線を追加</button>
+    <button class="btn-light" id="sampleCable">入力例</button>
+    <button class="btn-light" id="clearCable">電線をクリア</button>
+  </div>
+  <p class="note">「電線種類 → サイズ → 本数」の順に選択します。登録外の製品やメーカー差がある場合は、サイズ欄の「メーカー寸法を手入力」を選んでください。</p>
+</section>
+
+<section class="card">
+  <h2>3．電線管</h2>
+  <div class="grid">
+    <div><label for="conduitType">管種</label>
+      <select id="conduitType">
+        <option value="E">ねじなし電線管 E</option>
+        <option value="C">薄鋼電線管 C</option>
+        <option value="G">厚鋼電線管 G</option>
+        <option value="MANUAL">PF・CD・VE・その他（内径手入力）</option>
+      </select>
+    </div>
+    <div id="sizeBox"><label for="conduitSize">確認する呼び</label><select id="conduitSize"></select></div>
+  </div>
+  <div id="manualBox" class="grid hidden" style="margin-top:10px">
+    <div><label for="manualName">管名称・呼び</label><input id="manualName" placeholder="例：PF28"></div>
+    <div><label for="manualId">実内径（mm）</label><input id="manualId" type="number" min="1" step="0.1" placeholder="メーカー値を入力"></div>
+  </div>
+  <p class="note" id="dimensionNote"></p>
+</section>
+
+<section class="card">
+  <h2>4．計算結果</h2>
+  <div class="result-main">
+    <div class="metric"><div class="k">電線・ケーブル合計断面積</div><div class="v" id="wireArea">0.00</div><div class="s">mm²</div></div>
+    <div class="metric"><div class="k">必要な最小内径</div><div class="v" id="requiredId">―</div><div class="s">設定した判定上限から逆算</div></div>
+    <div class="metric"><div class="k">選択管の占積率</div><div class="v" id="fillRate">―</div><div class="s" id="selectedDetail">管を選択してください</div></div>
+    <div class="metric"><div class="k">判定</div><div class="v"><span id="judge" class="status warn">未入力</span></div><div class="s" id="marginText">―</div></div>
+  </div>
+  <div class="recommend" id="recommendBox">
+    <div class="small">選択管種の推奨最小サイズ</div>
+    <strong id="recommendSize">―</strong>
+    <div class="small" id="recommendDetail">電線種類・サイズ・本数を選択してください。</div>
+  </div>
+</section>
+
+<section class="card" id="sizeListCard">
+  <h2>5．サイズ別一覧</h2>
+  <div class="table-wrap">
+    <table><thead><tr><th>呼び</th><th>参考内径</th><th>管内面積</th><th>占積率</th><th>判定</th></tr></thead><tbody id="sizeList"></tbody></table>
+  </div>
+</section>
+
+<section class="card no-print">
+  <h2>保存・出力</h2>
+  <div class="actions">
+    <button class="btn-main" id="saveLocal">この端末に保存</button>
+    <button class="btn-sub" id="copyResult">結果をコピー</button>
+    <button class="btn-sub" id="exportCsv">CSV保存</button>
+    <button class="btn-light" id="printBtn">印刷・PDF</button>
+    <button class="btn-danger" id="resetAll">全てリセット</button>
+  </div>
+  <p class="note" id="saveMessage"></p>
+</section>
+
+<section class="card">
+  <h2>使い方・根拠</h2>
+  <details open><summary>計算式</summary>
+    <p class="note">丸形電線は π×（仕上外径÷2）²、平形電線は外形をカプセル形として近似し、本数を乗じます。管内面積＝π×（内径÷2）²。占積率＝電線合計面積÷管内面積×100。</p>
+  </details>
+  <details><summary>電線・電線管の寸法データ</summary>
+    <p class="note">IV、EM-IE/F、VVF、EM-EEF/F、CV、CVT、EM-CE/F、EM-CEE/Fなどの主要寸法はSWCC・SFCCの公開カタログを基礎に登録しています。HPは国土交通省「土木工事標準積算基準書（電気通信編）等の運用（令和8年3月）」別表の参考仕上外径を登録し、0.65・0.9・1.2・1.6mmの対より形は40Pまで選べます。電線外径はメーカー・型式で異なるため、実使用品の仕様書を優先してください。E・C・G管はPanasonic公式資料の外径・厚さから参考内径を算出しています。</p>
+    <p class="note"><a href="https://www.swcc.co.jp/sfcc/products/pdf/SFCC_Catlog_S_web.pdf" target="_blank" rel="noopener">SWCC・SFCC 産業用電線・ケーブルカタログ</a><br><a href="https://www.mlit.go.jp/tec/it/denki/content/densekisankijuntouunyoR0803.pdf" target="_blank" rel="noopener">国土交通省 電線・ケーブル参考仕上外径（令和8年3月）</a><br><a href="https://www2.panasonic.biz/jp/terasu/skill/iroha/book/nonresidential/pdf/part3.pdf" target="_blank" rel="noopener">Panasonic 配管材について</a></p>
+  </details>
+  <details><summary>重要な注意事項</summary>
+    <p class="note">本アプリは一次選定・照合用です。法令適合、許容電流、電圧降下、放熱、施工性、引入れ長さ、曲がり数、防火区画、接地、使用場所などを保証しません。正式な設計・施工では現行の内線規程および仕様書を優先してください。</p>
+  </details>
+  <details><summary>iPhoneでアプリのように使う</summary>
+    <p class="note">Webサーバー上で開いた場合は、Safariの共有ボタン →「ホーム画面に追加」で起動アイコンを作れます。HTMLファイル単体でも計算・保存・印刷は利用できます。</p>
+  </details>
+</section>
+</main>
+
+<footer><div class="foot-inner">
+  配管サイズチェッカー v1.4｜端末内保存のみ。入力内容を外部送信しません。
+</div></footer>
+
+<script>
+const PI=Math.PI;
+const wireCatalog=[{"key":"IV","label":"IV 600Vビニル絶縁電線","group":"絶縁電線","items":[{"label":"1.2mm","shape":"round","d":2.8},{"label":"1.6mm","shape":"round","d":3.2},{"label":"2.0mm","shape":"round","d":3.6},{"label":"2.6mm","shape":"round","d":4.6},{"label":"0.9sq","shape":"round","d":2.8},{"label":"1.25sq","shape":"round","d":3.0},{"label":"2sq","shape":"round","d":3.4},{"label":"3.5sq","shape":"round","d":4.0},{"label":"5.5sq","shape":"round","d":5.0},{"label":"8sq","shape":"round","d":6.0},{"label":"14sq","shape":"round","d":7.6},{"label":"22sq","shape":"round","d":9.2},{"label":"38sq","shape":"round","d":11.5},{"label":"60sq","shape":"round","d":14.0},{"label":"100sq","shape":"round","d":17.0},{"label":"150sq","shape":"round","d":21.0},{"label":"200sq","shape":"round","d":23.0},{"label":"250sq","shape":"round","d":26.0},{"label":"325sq","shape":"round","d":29.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"HIV","label":"HIV 600V耐熱ビニル絶縁電線","group":"絶縁電線","items":[{"label":"1.2mm","shape":"round","d":2.8},{"label":"1.6mm","shape":"round","d":3.2},{"label":"2.0mm","shape":"round","d":3.6},{"label":"2.6mm","shape":"round","d":4.6},{"label":"0.9sq","shape":"round","d":2.8},{"label":"1.25sq","shape":"round","d":3.0},{"label":"2sq","shape":"round","d":3.4},{"label":"3.5sq","shape":"round","d":4.0},{"label":"5.5sq","shape":"round","d":5.0},{"label":"8sq","shape":"round","d":6.0},{"label":"14sq","shape":"round","d":7.6},{"label":"22sq","shape":"round","d":9.2},{"label":"38sq","shape":"round","d":11.5},{"label":"60sq","shape":"round","d":14.0},{"label":"100sq","shape":"round","d":17.0},{"label":"150sq","shape":"round","d":21.0},{"label":"200sq","shape":"round","d":23.0},{"label":"250sq","shape":"round","d":26.0},{"label":"325sq","shape":"round","d":29.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_IE","label":"EM-IE/F 600V耐燃性ポリエチレン絶縁電線","group":"絶縁電線","items":[{"label":"1.2mm","shape":"round","d":2.8},{"label":"1.6mm","shape":"round","d":3.2},{"label":"2.0mm","shape":"round","d":3.6},{"label":"2.6mm","shape":"round","d":4.6},{"label":"0.9sq","shape":"round","d":2.8},{"label":"1.25sq","shape":"round","d":3.0},{"label":"2sq","shape":"round","d":3.4},{"label":"3.5sq","shape":"round","d":4.0},{"label":"5.5sq","shape":"round","d":5.0},{"label":"8sq","shape":"round","d":5.6},{"label":"14sq","shape":"round","d":6.8},{"label":"22sq","shape":"round","d":8.4},{"label":"38sq","shape":"round","d":10.5},{"label":"60sq","shape":"round","d":13.0},{"label":"100sq","shape":"round","d":17.0},{"label":"150sq","shape":"round","d":21.0},{"label":"200sq","shape":"round","d":24.0},{"label":"250sq","shape":"round","d":26.0},{"label":"325sq","shape":"round","d":29.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"KIV","label":"KIV 電気機器用ビニル絶縁電線","group":"絶縁電線","items":[{"label":"0.5sq","shape":"round","d":2.3},{"label":"0.75sq","shape":"round","d":2.5},{"label":"1.25sq","shape":"round","d":3.0},{"label":"2sq","shape":"round","d":3.4},{"label":"3.5sq","shape":"round","d":4.0},{"label":"5.5sq","shape":"round","d":5.0},{"label":"8sq","shape":"round","d":6.0},{"label":"14sq","shape":"round","d":7.6},{"label":"22sq","shape":"round","d":9.2},{"label":"38sq","shape":"round","d":11.5},{"label":"60sq","shape":"round","d":14.0},{"label":"100sq","shape":"round","d":17.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_LMFC","label":"EM-LMFC 可とう性架橋ポリエチレン絶縁電線","group":"絶縁電線","items":[{"label":"2sq","shape":"round","d":3.5},{"label":"3.5sq","shape":"round","d":4.1},{"label":"5.5sq","shape":"round","d":4.8},{"label":"8sq","shape":"round","d":5.5},{"label":"14sq","shape":"round","d":7.0},{"label":"22sq","shape":"round","d":8.4},{"label":"38sq","shape":"round","d":10.6},{"label":"60sq","shape":"round","d":13.0},{"label":"100sq","shape":"round","d":16.5},{"label":"150sq","shape":"round","d":20.0},{"label":"200sq","shape":"round","d":22.5},{"label":"250sq","shape":"round","d":25.0},{"label":"325sq","shape":"round","d":28.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"VVF_2","label":"VVF 2心","group":"低圧電力ケーブル","items":[{"label":"1.6mm-2C","shape":"flat","w":9.4,"h":6.2},{"label":"2.0mm-2C","shape":"flat","w":10.5,"h":6.6},{"label":"2.6mm-2C","shape":"flat","w":12.5,"h":7.6},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"VVF_3","label":"VVF 3心","group":"低圧電力ケーブル","items":[{"label":"1.6mm-3C","shape":"flat","w":13.0,"h":6.2},{"label":"2.0mm-3C","shape":"flat","w":14.0,"h":6.6},{"label":"2.6mm-3C","shape":"flat","w":17.0,"h":7.6},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"VVF_4","label":"VVF 4心","group":"低圧電力ケーブル","items":[{"label":"1.6mm-4C","shape":"flat","w":16.0,"h":6.2},{"label":"2.0mm-4C","shape":"flat","w":18.0,"h":6.6},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_EEF_2","label":"EM 600V EEF/F 2心","group":"低圧電力ケーブル","items":[{"label":"1.6mm-2C","shape":"flat","w":9.4,"h":6.2},{"label":"2.0mm-2C","shape":"flat","w":10.5,"h":6.6},{"label":"2.6mm-2C","shape":"flat","w":12.5,"h":7.6},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_EEF_3","label":"EM 600V EEF/F 3心","group":"低圧電力ケーブル","items":[{"label":"1.6mm-3C","shape":"flat","w":13.0,"h":6.2},{"label":"2.0mm-3C","shape":"flat","w":14.0,"h":6.6},{"label":"2.6mm-3C","shape":"flat","w":17.0,"h":7.6},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_EEF_4","label":"EM 600V EEF/F 4心","group":"低圧電力ケーブル","items":[{"label":"1.6mm-4C","shape":"flat","w":16.0,"h":6.2},{"label":"2.0mm-4C","shape":"flat","w":18.0,"h":6.6},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CV_1","label":"600V CV 1心","group":"低圧電力ケーブル","items":[{"label":"2sq-1C","shape":"round","d":6.4},{"label":"3.5sq-1C","shape":"round","d":7.0},{"label":"5.5sq-1C","shape":"round","d":8.0},{"label":"8sq-1C","shape":"round","d":8.4},{"label":"14sq-1C","shape":"round","d":9.4},{"label":"22sq-1C","shape":"round","d":11.0},{"label":"38sq-1C","shape":"round","d":13.0},{"label":"60sq-1C","shape":"round","d":15.5},{"label":"100sq-1C","shape":"round","d":19.0},{"label":"150sq-1C","shape":"round","d":22.0},{"label":"200sq-1C","shape":"round","d":26.0},{"label":"250sq-1C","shape":"round","d":28.0},{"label":"325sq-1C","shape":"round","d":31.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CV_2","label":"600V CV 2心","group":"低圧電力ケーブル","items":[{"label":"2sq-2C","shape":"round","d":10.5},{"label":"3.5sq-2C","shape":"round","d":11.5},{"label":"5.5sq-2C","shape":"round","d":13.5},{"label":"8sq-2C","shape":"round","d":14.5},{"label":"14sq-2C","shape":"round","d":16.5},{"label":"22sq-2C","shape":"round","d":19.5},{"label":"38sq-2C","shape":"round","d":23.0},{"label":"60sq-2C","shape":"round","d":29.0},{"label":"100sq-2C","shape":"round","d":37.0},{"label":"150sq-2C","shape":"round","d":43.0},{"label":"200sq-2C","shape":"round","d":50.0},{"label":"250sq-2C","shape":"round","d":54.0},{"label":"325sq-2C","shape":"round","d":60.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CV_3","label":"600V CV 3心","group":"低圧電力ケーブル","items":[{"label":"2sq-3C","shape":"round","d":11.0},{"label":"3.5sq-3C","shape":"round","d":12.0},{"label":"5.5sq-3C","shape":"round","d":14.5},{"label":"8sq-3C","shape":"round","d":15.0},{"label":"14sq-3C","shape":"round","d":17.5},{"label":"22sq-3C","shape":"round","d":21.0},{"label":"38sq-3C","shape":"round","d":25.0},{"label":"60sq-3C","shape":"round","d":31.0},{"label":"100sq-3C","shape":"round","d":40.0},{"label":"150sq-3C","shape":"round","d":46.0},{"label":"200sq-3C","shape":"round","d":54.0},{"label":"250sq-3C","shape":"round","d":58.0},{"label":"325sq-3C","shape":"round","d":64.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CV_4","label":"600V CV 4心","group":"低圧電力ケーブル","items":[{"label":"2sq-4C","shape":"round","d":11.5},{"label":"3.5sq-4C","shape":"round","d":13.0},{"label":"5.5sq-4C","shape":"round","d":15.5},{"label":"8sq-4C","shape":"round","d":16.5},{"label":"14sq-4C","shape":"round","d":19.0},{"label":"22sq-4C","shape":"round","d":23.0},{"label":"38sq-4C","shape":"round","d":28.0},{"label":"60sq-4C","shape":"round","d":34.0},{"label":"100sq-4C","shape":"round","d":44.0},{"label":"150sq-4C","shape":"round","d":51.0},{"label":"200sq-4C","shape":"round","d":60.0},{"label":"250sq-4C","shape":"round","d":65.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVD","label":"600V CVD（デュプレックス）","group":"低圧電力ケーブル","items":[{"label":"8sq","shape":"round","d":17.0},{"label":"14sq","shape":"round","d":19.0},{"label":"22sq","shape":"round","d":22.0},{"label":"38sq","shape":"round","d":26.0},{"label":"60sq","shape":"round","d":31.0},{"label":"100sq","shape":"round","d":38.0},{"label":"150sq","shape":"round","d":44.0},{"label":"200sq","shape":"round","d":51.0},{"label":"250sq","shape":"round","d":56.0},{"label":"325sq","shape":"round","d":61.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVT","label":"600V CVT（トリプレックス）","group":"低圧電力ケーブル","items":[{"label":"8sq","shape":"round","d":18.5},{"label":"14sq","shape":"round","d":21.0},{"label":"22sq","shape":"round","d":24.0},{"label":"38sq","shape":"round","d":28.0},{"label":"60sq","shape":"round","d":33.0},{"label":"100sq","shape":"round","d":41.0},{"label":"150sq","shape":"round","d":47.0},{"label":"200sq","shape":"round","d":55.0},{"label":"250sq","shape":"round","d":60.0},{"label":"325sq","shape":"round","d":66.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CE_1","label":"EM 600V CE/F 1心","group":"低圧電力ケーブル","items":[{"label":"2sq-1C","shape":"round","d":6.4},{"label":"3.5sq-1C","shape":"round","d":7.0},{"label":"5.5sq-1C","shape":"round","d":8.0},{"label":"8sq-1C","shape":"round","d":8.4},{"label":"14sq-1C","shape":"round","d":9.4},{"label":"22sq-1C","shape":"round","d":11.0},{"label":"38sq-1C","shape":"round","d":13.0},{"label":"60sq-1C","shape":"round","d":15.5},{"label":"100sq-1C","shape":"round","d":19.0},{"label":"150sq-1C","shape":"round","d":22.0},{"label":"200sq-1C","shape":"round","d":26.0},{"label":"250sq-1C","shape":"round","d":28.0},{"label":"325sq-1C","shape":"round","d":31.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CE_2","label":"EM 600V CE/F 2心","group":"低圧電力ケーブル","items":[{"label":"2sq-2C","shape":"round","d":10.5},{"label":"3.5sq-2C","shape":"round","d":11.5},{"label":"5.5sq-2C","shape":"round","d":13.5},{"label":"8sq-2C","shape":"round","d":14.5},{"label":"14sq-2C","shape":"round","d":16.5},{"label":"22sq-2C","shape":"round","d":19.5},{"label":"38sq-2C","shape":"round","d":23.0},{"label":"60sq-2C","shape":"round","d":29.0},{"label":"100sq-2C","shape":"round","d":37.0},{"label":"150sq-2C","shape":"round","d":43.0},{"label":"200sq-2C","shape":"round","d":50.0},{"label":"250sq-2C","shape":"round","d":54.0},{"label":"325sq-2C","shape":"round","d":60.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CE_3","label":"EM 600V CE/F 3心","group":"低圧電力ケーブル","items":[{"label":"2sq-3C","shape":"round","d":11.0},{"label":"3.5sq-3C","shape":"round","d":12.0},{"label":"5.5sq-3C","shape":"round","d":14.5},{"label":"8sq-3C","shape":"round","d":15.0},{"label":"14sq-3C","shape":"round","d":17.5},{"label":"22sq-3C","shape":"round","d":21.0},{"label":"38sq-3C","shape":"round","d":25.0},{"label":"60sq-3C","shape":"round","d":31.0},{"label":"100sq-3C","shape":"round","d":40.0},{"label":"150sq-3C","shape":"round","d":46.0},{"label":"200sq-3C","shape":"round","d":54.0},{"label":"250sq-3C","shape":"round","d":58.0},{"label":"325sq-3C","shape":"round","d":64.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CE_4","label":"EM 600V CE/F 4心","group":"低圧電力ケーブル","items":[{"label":"2sq-4C","shape":"round","d":11.5},{"label":"3.5sq-4C","shape":"round","d":13.0},{"label":"5.5sq-4C","shape":"round","d":15.5},{"label":"8sq-4C","shape":"round","d":16.5},{"label":"14sq-4C","shape":"round","d":19.0},{"label":"22sq-4C","shape":"round","d":23.0},{"label":"38sq-4C","shape":"round","d":28.0},{"label":"60sq-4C","shape":"round","d":34.0},{"label":"100sq-4C","shape":"round","d":44.0},{"label":"150sq-4C","shape":"round","d":51.0},{"label":"200sq-4C","shape":"round","d":60.0},{"label":"250sq-4C","shape":"round","d":65.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CED","label":"EM 600V CED/F（デュプレックス）","group":"低圧電力ケーブル","items":[{"label":"8sq","shape":"round","d":17.0},{"label":"14sq","shape":"round","d":19.0},{"label":"22sq","shape":"round","d":22.0},{"label":"38sq","shape":"round","d":26.0},{"label":"60sq","shape":"round","d":31.0},{"label":"100sq","shape":"round","d":38.0},{"label":"150sq","shape":"round","d":44.0},{"label":"200sq","shape":"round","d":51.0},{"label":"250sq","shape":"round","d":56.0},{"label":"325sq","shape":"round","d":61.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CET","label":"EM 600V CET/F（トリプレックス）","group":"低圧電力ケーブル","items":[{"label":"8sq","shape":"round","d":18.5},{"label":"14sq","shape":"round","d":21.0},{"label":"22sq","shape":"round","d":24.0},{"label":"38sq","shape":"round","d":28.0},{"label":"60sq","shape":"round","d":33.0},{"label":"100sq","shape":"round","d":41.0},{"label":"150sq","shape":"round","d":47.0},{"label":"200sq","shape":"round","d":55.0},{"label":"250sq","shape":"round","d":60.0},{"label":"325sq","shape":"round","d":66.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"VVR_2","label":"VVR 2心","group":"低圧電力ケーブル","items":[{"label":"1.6sq-2C","shape":"round","d":10.5},{"label":"2.0sq-2C","shape":"round","d":11.5},{"label":"2.6sq-2C","shape":"round","d":13.5},{"label":"5.5sq-2C","shape":"round","d":16.5},{"label":"8sq-2C","shape":"round","d":18.0},{"label":"14sq-2C","shape":"round","d":21.5},{"label":"22sq-2C","shape":"round","d":25.0},{"label":"38sq-2C","shape":"round","d":30.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"VVR_3","label":"VVR 3心","group":"低圧電力ケーブル","items":[{"label":"1.6sq-3C","shape":"round","d":11.0},{"label":"2.0sq-3C","shape":"round","d":12.0},{"label":"2.6sq-3C","shape":"round","d":14.5},{"label":"5.5sq-3C","shape":"round","d":17.5},{"label":"8sq-3C","shape":"round","d":19.0},{"label":"14sq-3C","shape":"round","d":23.0},{"label":"22sq-3C","shape":"round","d":27.0},{"label":"38sq-3C","shape":"round","d":32.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_2","label":"EM CEE/F 2心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-2C","shape":"round","d":9.2},{"label":"2sq-2C","shape":"round","d":10.5},{"label":"3.5sq-2C","shape":"round","d":11.5},{"label":"5.5sq-2C","shape":"round","d":13.5},{"label":"8sq-2C","shape":"round","d":14.5},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_2","label":"CVV 2心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-2C","shape":"round","d":9.2},{"label":"2sq-2C","shape":"round","d":10.5},{"label":"3.5sq-2C","shape":"round","d":11.5},{"label":"5.5sq-2C","shape":"round","d":13.5},{"label":"8sq-2C","shape":"round","d":14.5},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_3","label":"EM CEE/F 3心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-3C","shape":"round","d":9.7},{"label":"2sq-3C","shape":"round","d":11.0},{"label":"3.5sq-3C","shape":"round","d":12.0},{"label":"5.5sq-3C","shape":"round","d":14.5},{"label":"8sq-3C","shape":"round","d":15.5},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_3","label":"CVV 3心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-3C","shape":"round","d":9.7},{"label":"2sq-3C","shape":"round","d":11.0},{"label":"3.5sq-3C","shape":"round","d":12.0},{"label":"5.5sq-3C","shape":"round","d":14.5},{"label":"8sq-3C","shape":"round","d":15.5},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_4","label":"EM CEE/F 4心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-4C","shape":"round","d":10.5},{"label":"2sq-4C","shape":"round","d":11.5},{"label":"3.5sq-4C","shape":"round","d":13.0},{"label":"5.5sq-4C","shape":"round","d":15.5},{"label":"8sq-4C","shape":"round","d":17.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_4","label":"CVV 4心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-4C","shape":"round","d":10.5},{"label":"2sq-4C","shape":"round","d":11.5},{"label":"3.5sq-4C","shape":"round","d":13.0},{"label":"5.5sq-4C","shape":"round","d":15.5},{"label":"8sq-4C","shape":"round","d":17.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_5","label":"EM CEE/F 5心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-5C","shape":"round","d":11.5},{"label":"2sq-5C","shape":"round","d":12.5},{"label":"3.5sq-5C","shape":"round","d":14.5},{"label":"5.5sq-5C","shape":"round","d":17.0},{"label":"8sq-5C","shape":"round","d":18.5},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_5","label":"CVV 5心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-5C","shape":"round","d":11.5},{"label":"2sq-5C","shape":"round","d":12.5},{"label":"3.5sq-5C","shape":"round","d":14.5},{"label":"5.5sq-5C","shape":"round","d":17.0},{"label":"8sq-5C","shape":"round","d":18.5},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_6","label":"EM CEE/F 6心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-6C","shape":"round","d":12.5},{"label":"2sq-6C","shape":"round","d":13.5},{"label":"3.5sq-6C","shape":"round","d":15.5},{"label":"5.5sq-6C","shape":"round","d":18.5},{"label":"8sq-6C","shape":"round","d":21.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_6","label":"CVV 6心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-6C","shape":"round","d":12.5},{"label":"2sq-6C","shape":"round","d":13.5},{"label":"3.5sq-6C","shape":"round","d":15.5},{"label":"5.5sq-6C","shape":"round","d":18.5},{"label":"8sq-6C","shape":"round","d":21.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_7","label":"EM CEE/F 7心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-7C","shape":"round","d":12.5},{"label":"2sq-7C","shape":"round","d":13.5},{"label":"3.5sq-7C","shape":"round","d":15.5},{"label":"5.5sq-7C","shape":"round","d":18.5},{"label":"8sq-7C","shape":"round","d":21.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_7","label":"CVV 7心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-7C","shape":"round","d":12.5},{"label":"2sq-7C","shape":"round","d":13.5},{"label":"3.5sq-7C","shape":"round","d":15.5},{"label":"5.5sq-7C","shape":"round","d":18.5},{"label":"8sq-7C","shape":"round","d":21.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_8","label":"EM CEE/F 8心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-8C","shape":"round","d":13.0},{"label":"2sq-8C","shape":"round","d":14.5},{"label":"3.5sq-8C","shape":"round","d":16.5},{"label":"5.5sq-8C","shape":"round","d":20.0},{"label":"8sq-8C","shape":"round","d":22.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_8","label":"CVV 8心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-8C","shape":"round","d":13.0},{"label":"2sq-8C","shape":"round","d":14.5},{"label":"3.5sq-8C","shape":"round","d":16.5},{"label":"5.5sq-8C","shape":"round","d":20.0},{"label":"8sq-8C","shape":"round","d":22.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_10","label":"EM CEE/F 10心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-10C","shape":"round","d":15.5},{"label":"2sq-10C","shape":"round","d":17.0},{"label":"3.5sq-10C","shape":"round","d":19.5},{"label":"5.5sq-10C","shape":"round","d":24.0},{"label":"8sq-10C","shape":"round","d":27.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_10","label":"CVV 10心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-10C","shape":"round","d":15.5},{"label":"2sq-10C","shape":"round","d":17.0},{"label":"3.5sq-10C","shape":"round","d":19.5},{"label":"5.5sq-10C","shape":"round","d":24.0},{"label":"8sq-10C","shape":"round","d":27.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_12","label":"EM CEE/F 12心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-12C","shape":"round","d":16.0},{"label":"2sq-12C","shape":"round","d":17.5},{"label":"3.5sq-12C","shape":"round","d":20.0},{"label":"5.5sq-12C","shape":"round","d":25.0},{"label":"8sq-12C","shape":"round","d":27.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_12","label":"CVV 12心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-12C","shape":"round","d":16.0},{"label":"2sq-12C","shape":"round","d":17.5},{"label":"3.5sq-12C","shape":"round","d":20.0},{"label":"5.5sq-12C","shape":"round","d":25.0},{"label":"8sq-12C","shape":"round","d":27.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_15","label":"EM CEE/F 15心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-15C","shape":"round","d":17.0},{"label":"2sq-15C","shape":"round","d":19.0},{"label":"3.5sq-15C","shape":"round","d":22.0},{"label":"5.5sq-15C","shape":"round","d":27.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_15","label":"CVV 15心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-15C","shape":"round","d":17.0},{"label":"2sq-15C","shape":"round","d":19.0},{"label":"3.5sq-15C","shape":"round","d":22.0},{"label":"5.5sq-15C","shape":"round","d":27.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_20","label":"EM CEE/F 20心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-20C","shape":"round","d":19.0},{"label":"2sq-20C","shape":"round","d":21.0},{"label":"3.5sq-20C","shape":"round","d":25.0},{"label":"5.5sq-20C","shape":"round","d":30.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_20","label":"CVV 20心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-20C","shape":"round","d":19.0},{"label":"2sq-20C","shape":"round","d":21.0},{"label":"3.5sq-20C","shape":"round","d":25.0},{"label":"5.5sq-20C","shape":"round","d":30.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEE_30","label":"EM CEE/F 30心","group":"制御・計装ケーブル","items":[{"label":"1.25sq-30C","shape":"round","d":23.0},{"label":"2sq-30C","shape":"round","d":26.0},{"label":"3.5sq-30C","shape":"round","d":30.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVV_30","label":"CVV 30心（代表外径）","group":"制御・計装ケーブル","items":[{"label":"1.25sq-30C","shape":"round","d":23.0},{"label":"2sq-30C","shape":"round","d":26.0},{"label":"3.5sq-30C","shape":"round","d":30.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CVVS","label":"CVV-S 遮へい付","group":"制御・計装ケーブル","items":[{"label":"0.65mm-1P","shape":"round","d":5.4},{"label":"0.65mm-2P","shape":"round","d":6.5},{"label":"0.65mm-3P","shape":"round","d":7.2},{"label":"0.65mm-5P","shape":"round","d":8.6},{"label":"0.65mm-10P","shape":"round","d":11.9},{"label":"0.65mm-20P","shape":"round","d":16.2},{"label":"0.9mm-1P","shape":"round","d":6.5},{"label":"0.9mm-2P","shape":"round","d":7.6},{"label":"0.9mm-5P","shape":"round","d":10.3},{"label":"0.9mm-10P","shape":"round","d":14.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"EM_CEES","label":"EM CEE/F-S 遮へい付","group":"制御・計装ケーブル","items":[{"label":"0.65mm-1P","shape":"round","d":5.4},{"label":"0.65mm-2P","shape":"round","d":6.5},{"label":"0.65mm-3P","shape":"round","d":7.2},{"label":"0.65mm-5P","shape":"round","d":8.6},{"label":"0.65mm-10P","shape":"round","d":11.9},{"label":"0.65mm-20P","shape":"round","d":16.2},{"label":"0.9mm-1P","shape":"round","d":6.5},{"label":"0.9mm-2P","shape":"round","d":7.6},{"label":"0.9mm-5P","shape":"round","d":10.3},{"label":"0.9mm-10P","shape":"round","d":14.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"CPEV","label":"CPEV 市内対ポリエチレン絶縁ケーブル","group":"制御・計装ケーブル","items":[{"label":"0.65mm-1P","shape":"round","d":5.0},{"label":"0.65mm-2P","shape":"round","d":6.0},{"label":"0.65mm-3P","shape":"round","d":6.7},{"label":"0.65mm-5P","shape":"round","d":8.0},{"label":"0.65mm-10P","shape":"round","d":11.0},{"label":"0.65mm-20P","shape":"round","d":15.0},{"label":"0.9mm-1P","shape":"round","d":6.0},{"label":"0.9mm-2P","shape":"round","d":7.0},{"label":"0.9mm-5P","shape":"round","d":9.5},{"label":"0.9mm-10P","shape":"round","d":13.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"FCPEV","label":"FCPEV 遮へい付計装ケーブル","group":"制御・計装ケーブル","items":[{"label":"0.65mm-1P","shape":"round","d":5.0},{"label":"0.65mm-2P","shape":"round","d":6.0},{"label":"0.65mm-3P","shape":"round","d":6.7},{"label":"0.65mm-5P","shape":"round","d":8.0},{"label":"0.65mm-10P","shape":"round","d":11.0},{"label":"0.65mm-20P","shape":"round","d":15.0},{"label":"0.9mm-1P","shape":"round","d":6.0},{"label":"0.9mm-2P","shape":"round","d":7.0},{"label":"0.9mm-5P","shape":"round","d":9.5},{"label":"0.9mm-10P","shape":"round","d":13.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"KPEV","label":"KPEV 計装用ケーブル","group":"制御・計装ケーブル","items":[{"label":"0.65mm-1P","shape":"round","d":5.0},{"label":"0.65mm-2P","shape":"round","d":6.0},{"label":"0.65mm-3P","shape":"round","d":6.7},{"label":"0.65mm-5P","shape":"round","d":8.0},{"label":"0.65mm-10P","shape":"round","d":11.0},{"label":"0.65mm-20P","shape":"round","d":15.0},{"label":"0.9mm-1P","shape":"round","d":6.0},{"label":"0.9mm-2P","shape":"round","d":7.0},{"label":"0.9mm-5P","shape":"round","d":9.5},{"label":"0.9mm-10P","shape":"round","d":13.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"MVVS","label":"MVVS マイクロホン用ビニルコード","group":"制御・計装ケーブル","items":[{"label":"0.65mm-1P","shape":"round","d":5.0},{"label":"0.65mm-2P","shape":"round","d":6.0},{"label":"0.65mm-3P","shape":"round","d":6.7},{"label":"0.65mm-5P","shape":"round","d":8.0},{"label":"0.65mm-10P","shape":"round","d":11.0},{"label":"0.65mm-20P","shape":"round","d":15.0},{"label":"0.9mm-1P","shape":"round","d":6.0},{"label":"0.9mm-2P","shape":"round","d":7.0},{"label":"0.9mm-5P","shape":"round","d":9.5},{"label":"0.9mm-10P","shape":"round","d":13.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"AE","label":"AE 警報用ポリエチレン絶縁ケーブル","group":"消防・弱電ケーブル","items":[{"label":"0.9mm-2C","shape":"round","d":4.0},{"label":"0.9mm-3C","shape":"round","d":4.5},{"label":"0.9mm-4C","shape":"round","d":5.0},{"label":"0.9mm-6C","shape":"round","d":6.0},{"label":"1.2mm-2C","shape":"round","d":5.0},{"label":"1.2mm-4C","shape":"round","d":6.2},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"HP","label":"HP 耐熱電線（40Pまで）","group":"消防・弱電ケーブル","items":[{"label":"0.65mm-2C","shape":"round","d":4.5},{"label":"0.65mm-4C","shape":"round","d":5.0},{"label":"0.65mm-6C","shape":"round","d":6.0},{"label":"0.65mm-5P","shape":"round","d":8.3},{"label":"0.65mm-10P","shape":"round","d":10.8},{"label":"0.65mm-15P","shape":"round","d":11.5},{"label":"0.65mm-20P","shape":"round","d":13.8},{"label":"0.65mm-30P","shape":"round","d":16.3},{"label":"0.65mm-40P","shape":"round","d":17.0},{"label":"0.9mm-1C","shape":"round","d":2.7},{"label":"0.9mm-2C","shape":"round","d":5.3},{"label":"0.9mm-3C","shape":"round","d":6.0},{"label":"0.9mm-4C","shape":"round","d":6.0},{"label":"0.9mm-5C","shape":"round","d":6.3},{"label":"0.9mm-6C","shape":"round","d":6.8},{"label":"0.9mm-7C","shape":"round","d":6.8},{"label":"0.9mm-3P","shape":"round","d":7.9},{"label":"0.9mm-5P","shape":"round","d":9.3},{"label":"0.9mm-7P","shape":"round","d":10.3},{"label":"0.9mm-10P","shape":"round","d":11.6},{"label":"0.9mm-15P","shape":"round","d":13.5},{"label":"0.9mm-20P","shape":"round","d":15.8},{"label":"0.9mm-25P","shape":"round","d":16.3},{"label":"0.9mm-30P","shape":"round","d":18.5},{"label":"0.9mm-40P","shape":"round","d":20.7},{"label":"1.2mm-1C","shape":"round","d":3.2},{"label":"1.2mm-2C","shape":"round","d":6.2},{"label":"1.2mm-3C","shape":"round","d":7.0},{"label":"1.2mm-4C","shape":"round","d":6.9},{"label":"1.2mm-5C","shape":"round","d":7.4},{"label":"1.2mm-6C","shape":"round","d":8.1},{"label":"1.2mm-7C","shape":"round","d":8.1},{"label":"1.2mm-3P","shape":"round","d":9.4},{"label":"1.2mm-5P","shape":"round","d":11.4},{"label":"1.2mm-7P","shape":"round","d":12.2},{"label":"1.2mm-10P","shape":"round","d":14.1},{"label":"1.2mm-15P","shape":"round","d":16.2},{"label":"1.2mm-20P","shape":"round","d":19.4},{"label":"1.2mm-25P","shape":"round","d":20.7},{"label":"1.2mm-30P","shape":"round","d":23.1},{"label":"1.2mm-40P","shape":"round","d":25.8},{"label":"1.6mm-1C","shape":"round","d":4.7},{"label":"1.6mm-2C","shape":"round","d":7.1},{"label":"1.6mm-3C","shape":"round","d":8.3},{"label":"1.6mm-4C","shape":"round","d":8.3},{"label":"1.6mm-5C","shape":"round","d":9.5},{"label":"1.6mm-6C","shape":"round","d":10.0},{"label":"1.6mm-7C","shape":"round","d":10.0},{"label":"1.6mm-3P","shape":"round","d":11.5},{"label":"1.6mm-5P","shape":"round","d":14.7},{"label":"1.6mm-7P","shape":"round","d":15.0},{"label":"1.6mm-10P","shape":"round","d":18.0},{"label":"1.6mm-15P","shape":"round","d":23.0},{"label":"1.6mm-20P","shape":"round","d":26.5},{"label":"1.6mm-25P","shape":"round","d":29.0},{"label":"1.6mm-30P","shape":"round","d":31.0},{"label":"1.6mm-40P","shape":"round","d":35.0},{"label":"2.0mm-1C","shape":"round","d":6.1},{"label":"2.0mm-2C","shape":"round","d":8.8},{"label":"2.0mm-3C","shape":"round","d":9.3},{"label":"2.0mm-4C","shape":"round","d":9.8},{"label":"2.0mm-6C","shape":"round","d":11.8},{"label":"2.0mm-10C","shape":"round","d":15.0},{"label":"2.0mm-15C","shape":"round","d":16.5},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"FP","label":"FP-C 耐火ケーブル","group":"消防・弱電ケーブル","items":[{"label":"1.2mm-2C","shape":"round","d":9.0},{"label":"1.2mm-3C","shape":"round","d":10.0},{"label":"1.2mm-4C","shape":"round","d":11.0},{"label":"1.6mm-2C","shape":"round","d":10.0},{"label":"1.6mm-3C","shape":"round","d":11.0},{"label":"2.0mm-2C","shape":"round","d":12.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"TIVF","label":"TIVF 屋内電話線","group":"消防・弱電ケーブル","items":[{"label":"0.65mm-2C","shape":"flat","w":5.0,"h":2.5},{"label":"0.8mm-2C","shape":"flat","w":5.5,"h":2.8},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"LAN","label":"LANケーブル","group":"通信・同軸・光","items":[{"label":"Cat5e UTP","shape":"round","d":5.5},{"label":"Cat6 UTP","shape":"round","d":6.3},{"label":"Cat6A UTP","shape":"round","d":7.5},{"label":"Cat6A F/UTP","shape":"round","d":8.0},{"label":"Cat7 S/FTP","shape":"round","d":8.5},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"COAX","label":"同軸ケーブル","group":"通信・同軸・光","items":[{"label":"3C-2V","shape":"round","d":5.4},{"label":"5C-2V","shape":"round","d":7.4},{"label":"7C-2V","shape":"round","d":10.2},{"label":"S-4C-FB","shape":"round","d":6.0},{"label":"S-5C-FB","shape":"round","d":7.7},{"label":"S-7C-FB","shape":"round","d":10.2},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"OPTICAL","label":"光ファイバケーブル","group":"通信・同軸・光","items":[{"label":"2心","shape":"round","d":5.0},{"label":"4心","shape":"round","d":5.5},{"label":"8心","shape":"round","d":6.0},{"label":"12心","shape":"round","d":6.5},{"label":"24心","shape":"round","d":9.0},{"label":"48心","shape":"round","d":11.0},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"VCTF","label":"VCTF ビニルキャブタイヤ丸形コード","group":"コード・キャブタイヤ","items":[{"label":"0.5sq-2C","shape":"round","d":6.6},{"label":"0.75sq-2C","shape":"round","d":7.2},{"label":"1.25sq-2C","shape":"round","d":8.4},{"label":"2sq-2C","shape":"round","d":9.8},{"label":"0.75sq-3C","shape":"round","d":7.6},{"label":"1.25sq-3C","shape":"round","d":9.0},{"label":"2sq-3C","shape":"round","d":10.5},{"label":"0.75sq-4C","shape":"round","d":8.4},{"label":"1.25sq-4C","shape":"round","d":9.8},{"label":"2sq-4C","shape":"round","d":11.5},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"VCT","label":"VCT 600Vビニルキャブタイヤケーブル","group":"コード・キャブタイヤ","items":[{"label":"0.75sq-2C","shape":"round","d":9.6},{"label":"1.25sq-2C","shape":"round","d":10.5},{"label":"2sq-2C","shape":"round","d":11.5},{"label":"3.5sq-2C","shape":"round","d":13.5},{"label":"5.5sq-2C","shape":"round","d":15.5},{"label":"0.75sq-3C","shape":"round","d":10.0},{"label":"1.25sq-3C","shape":"round","d":11.0},{"label":"2sq-3C","shape":"round","d":12.5},{"label":"3.5sq-3C","shape":"round","d":14.5},{"label":"5.5sq-3C","shape":"round","d":16.5},{"label":"2sq-4C","shape":"round","d":13.5},{"label":"3.5sq-4C","shape":"round","d":15.5},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"2PNCT","label":"2PNCT ゴムキャブタイヤケーブル","group":"コード・キャブタイヤ","items":[{"label":"0.75sq-2C","shape":"round","d":10.5},{"label":"1.25sq-2C","shape":"round","d":11.5},{"label":"2sq-2C","shape":"round","d":12.5},{"label":"3.5sq-2C","shape":"round","d":14.5},{"label":"5.5sq-2C","shape":"round","d":16.5},{"label":"0.75sq-3C","shape":"round","d":11.0},{"label":"1.25sq-3C","shape":"round","d":12.0},{"label":"2sq-3C","shape":"round","d":13.5},{"label":"3.5sq-3C","shape":"round","d":15.5},{"label":"5.5sq-3C","shape":"round","d":17.5},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"VFF","label":"VFF ビニル平形コード","group":"コード・キャブタイヤ","items":[{"label":"0.5sq-2C","shape":"flat","w":5.6,"h":3.0},{"label":"0.75sq-2C","shape":"flat","w":6.2,"h":3.2},{"label":"1.25sq-2C","shape":"flat","w":7.2,"h":3.7},{"label":"2sq-2C","shape":"flat","w":8.4,"h":4.2},{"label":"メーカー寸法を手入力","shape":"manual"}]},{"key":"MANUAL","label":"その他・メーカー指定品","group":"その他","items":[{"label":"仕上外径を手入力","shape":"manual"}]}];
+const wireCatalogMap=Object.fromEntries(wireCatalog.map(x=>[x.key,x]));
+const conduitData={
+ E:[
+  {name:"E19",od:19.1,t:1.2},{name:"E25",od:25.4,t:1.2},{name:"E31",od:31.8,t:1.4},
+  {name:"E39",od:38.1,t:1.4},{name:"E51",od:50.8,t:1.4},{name:"E63",od:63.5,t:1.6},{name:"E75",od:76.2,t:1.8}
+ ],
+ C:[
+  {name:"C19",od:19.1,t:1.6},{name:"C25",od:25.4,t:1.6},{name:"C31",od:31.8,t:1.6},
+  {name:"C39",od:38.1,t:1.6},{name:"C51",od:50.8,t:1.6},{name:"C63",od:63.5,t:2.0},{name:"C75",od:76.2,t:2.0}
+ ],
+ G:[
+  {name:"G16",od:21.0,t:2.3},{name:"G22",od:26.5,t:2.3},{name:"G28",od:33.3,t:2.5},
+  {name:"G36",od:41.9,t:2.5},{name:"G42",od:47.8,t:2.5},{name:"G54",od:59.6,t:2.8},
+  {name:"G70",od:75.2,t:2.8},{name:"G82",od:87.9,t:2.8},{name:"G92",od:100.7,t:3.5},{name:"G104",od:113.4,t:3.5}
+ ]
+};
+Object.values(conduitData).flat().forEach(x=>x.id=+(x.od-2*x.t).toFixed(2));
+
+const $=id=>document.getElementById(id);
+const rows=$("cableRows");
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
+function typeOptions(selected=""){
+ const groups={};wireCatalog.forEach(t=>(groups[t.group]??=[]).push(t));
+ return Object.entries(groups).map(([g,list])=>`<optgroup label="${esc(g)}">${list.map(t=>`<option value="${t.key}" ${t.key===selected?"selected":""}>${esc(t.label)}</option>`).join("")}</optgroup>`).join("");
+}
+function countOptions(selected=1){return Array.from({length:100},(_,i)=>i+1).map(n=>`<option value="${n}" ${n===Number(selected)?"selected":""}>${n}本</option>`).join("")}
+function sizeOptions(typeKey,selected=0){
+ const type=wireCatalogMap[typeKey]||wireCatalog[0];
+ return type.items.map((x,i)=>`<option value="${i}" ${i===Number(selected)?"selected":""}>${esc(x.label)}</option>`).join("");
+}
+function selectedWireItem(tr){
+ const typeKey=tr.querySelector(".wire-type").value;
+ const type=wireCatalogMap[typeKey]||wireCatalog[0];
+ const idx=Number(tr.querySelector(".wire-size").value)||0;
+ return {type,item:type.items[idx]||type.items[0],idx};
+}
+function wireItemArea(item,manualDiameter=0){
+ if(!item)return 0;
+ if(item.shape==="round")return PI*Math.pow(Number(item.d||0)/2,2);
+ if(item.shape==="flat"){
+  const w=Math.max(Number(item.w||0),Number(item.h||0)),h=Math.min(Number(item.w||0),Number(item.h||0));
+  return PI*Math.pow(h/2,2)+Math.max(0,w-h)*h;
+ }
+ return PI*Math.pow(Number(manualDiameter||0)/2,2);
+}
+function wireDimension(item,manualDiameter=0){
+ if(!item)return "―";
+ if(item.shape==="round")return `φ${Number(item.d).toFixed(1)}mm`;
+ if(item.shape==="flat")return `${Number(item.w).toFixed(1)}×${Number(item.h).toFixed(1)}mm`;
+ return manualDiameter?`φ${Number(manualDiameter).toFixed(2)}mm`:"外径未入力";
+}
+function refreshWireRow(tr,restore={}){
+ const typeKey=tr.querySelector(".wire-type").value;
+ const type=wireCatalogMap[typeKey]||wireCatalog[0];
+ const size=tr.querySelector(".wire-size");
+ const wanted=restore.sizeIndex!=null?restore.sizeIndex:0;
+ size.innerHTML=sizeOptions(type.key,wanted);
+ if(Number(wanted)>=type.items.length)size.value="0";
+ updateWireRowMode(tr,restore);
+}
+function updateWireRowMode(tr,restore={}){
+ const {type,item}=selectedWireItem(tr);
+ const manual=item.shape==="manual";
+ const cell=tr.querySelector(".wire-dimension");
+ const labelVal=restore.manualLabel??tr.dataset.manualLabel??"";
+ const diaVal=restore.manualDiameter??tr.dataset.manualDiameter??"";
+ if(manual){
+  cell.innerHTML=`<div style="display:flex;gap:5px;min-width:225px"><input class="manual-label" value="${esc(labelVal)}" placeholder="名称・サイズ"><input class="manual-dia" type="number" min="0" step="0.01" inputmode="decimal" value="${esc(diaVal)}" placeholder="外径mm"></div>`;
+  const li=cell.querySelector(".manual-label"),di=cell.querySelector(".manual-dia");
+  li.addEventListener("input",()=>{tr.dataset.manualLabel=li.value;calculate()});
+  di.addEventListener("input",()=>{tr.dataset.manualDiameter=di.value;calculate()});
+ }else cell.textContent=wireDimension(item);
+ calculate();
+}
+function addCableRow(data={typeKey:"IV",sizeIndex:0,count:1,manualLabel:"",manualDiameter:""}){
+ // Old v1.0 saved data migration
+ if(data.name!==undefined||data.diameter!==undefined){data={typeKey:"MANUAL",sizeIndex:0,count:data.count||1,manualLabel:data.name||"旧データ",manualDiameter:data.diameter||""};}
+ const tr=document.createElement("tr");
+ tr.dataset.manualLabel=data.manualLabel||"";tr.dataset.manualDiameter=data.manualDiameter||"";
+ tr.innerHTML=`<td data-label="電線種類"><select class="wire-type" aria-label="電線種類">${typeOptions(data.typeKey||"IV")}</select></td>
+ <td data-label="サイズ"><select class="wire-size" aria-label="電線サイズ"></select></td>
+ <td data-label="本数"><select class="wire-count" aria-label="本数">${countOptions(data.count||1)}</select></td>
+ <td class="wire-dimension" data-label="参考外形"></td><td class="wire-subtotal" data-label="小計面積">0.00</td>
+ <td class="no-print"><button class="icon-btn" aria-label="この電線を削除">この電線を削除</button></td>`;
+ const typeSelect=tr.querySelector(".wire-type"),sizeSelect=tr.querySelector(".wire-size"),countSelect=tr.querySelector(".wire-count");
+ // iPhone Safariでは選択パネルが閉じた後に内容を更新すると安定する
+ typeSelect.addEventListener("change",()=>setTimeout(()=>refreshWireRow(tr),0));
+ sizeSelect.addEventListener("change",()=>setTimeout(()=>updateWireRowMode(tr),0));
+ countSelect.addEventListener("change",calculate);
+ [typeSelect,sizeSelect,countSelect].forEach(s=>s.addEventListener("touchstart",e=>e.stopPropagation(),{passive:true}));
+ tr.querySelector("button").addEventListener("click",()=>{tr.remove();if(!rows.children.length)addCableRow();calculate();});
+ rows.appendChild(tr);refreshWireRow(tr,data);calculate();
+}
+function getLimit(){
+ if($("limit").value==="custom") return Math.max(1,Math.min(90,Number($("customLimit").value)||32));
+ return Number($("limit").value);
+}
+function getWires(){
+ return [...rows.querySelectorAll("tr")].map(tr=>{
+  const {type,item,idx}=selectedWireItem(tr),count=Number(tr.querySelector(".wire-count").value)||0;
+  const manualLabel=tr.querySelector(".manual-label")?.value||tr.dataset.manualLabel||"";
+  const manualDiameter=Number(tr.querySelector(".manual-dia")?.value||tr.dataset.manualDiameter)||0;
+  const name=item.shape==="manual"?(manualLabel||`${type.label}・手入力`):`${type.label} ${item.label}`;
+  return {typeKey:type.key,sizeIndex:idx,name,item,manualLabel,manualDiameter,count,unitArea:wireItemArea(item,manualDiameter),tr};
+ });
+}
+function wireArea(w){return w.unitArea*w.count}
+function pipeArea(id){return PI*Math.pow(id/2,2)}
+function currentPipe(){
+ const type=$("conduitType").value;
+ if(type==="MANUAL") return {name:$("manualName").value.trim()||"手入力管",id:Number($("manualId").value)||0};
+ return conduitData[type][Number($("conduitSize").value)||0];
+}
+function renderConduitSizes(){
+ const type=$("conduitType").value;
+ const manual=type==="MANUAL";
+ $("manualBox").classList.toggle("hidden",!manual);
+ $("sizeBox").classList.toggle("hidden",manual);
+ $("sizeListCard").classList.toggle("hidden",manual);
+ if(!manual){
+  $("conduitSize").innerHTML=conduitData[type].map((x,i)=>`<option value="${i}">${x.name}（参考内径 ${x.id.toFixed(1)}mm）</option>`).join("");
+  $("dimensionNote").textContent="参考内径はメーカー公式の外径・厚さから算出しています。";
+ }else{
+  $("dimensionNote").textContent="実際に使用する管メーカーの最新カタログに記載された内径を入力してください。";
+ }
+ calculate();
+}
+function calculate(){
+ const wires=getWires();
+ let total=0;
+ wires.forEach(w=>{
+  const a=wireArea(w); total+=a;
+  w.tr.querySelector(".wire-subtotal").textContent=a.toFixed(2);
+ });
+ const limit=getLimit();
+ const req=total>0?Math.sqrt((4*total)/(PI*(limit/100))):0;
+ $("wireArea").textContent=total.toFixed(2);
+ $("requiredId").textContent=req?req.toFixed(2)+" mm":"―";
+ const p=currentPipe();
+ let fill=0;
+ if(p&&p.id>0&&total>0) fill=total/pipeArea(p.id)*100;
+ $("fillRate").textContent=(p&&p.id>0&&total>0)?fill.toFixed(1)+"％":"―";
+ $("selectedDetail").textContent=p&&p.id>0?`${p.name}・内径 ${p.id.toFixed(2)}mm`:"管の内径を入力してください";
+ const judge=$("judge");
+ if(!total||!p||!p.id){judge.textContent="未入力";judge.className="status warn";$("marginText").textContent="―";}
+ else if(fill<=limit){judge.textContent="適合";judge.className="status ok";$("marginText").textContent=`上限 ${limit}% に対し ${Math.max(0,limit-fill).toFixed(1)}ポイントの余裕`;}
+ else{judge.textContent="超過";judge.className="status ng";$("marginText").textContent=`上限 ${limit}% を ${(fill-limit).toFixed(1)}ポイント超過`;}
+ renderRecommendation(total,limit,req);
+ renderSizeList(total,limit);
+}
+function renderRecommendation(total,limit,req){
+ const type=$("conduitType").value;
+ if(!total){$("recommendSize").textContent="―";$("recommendDetail").textContent="電線種類・サイズ・本数を選択してください。";return}
+ if(type==="MANUAL"){
+  $("recommendSize").textContent=`必要内径 ${req.toFixed(2)}mm 以上`;
+  $("recommendDetail").textContent="使用する管メーカーの内径表から、これ以上の実内径を持つサイズを選定してください。";return
+ }
+ const hit=conduitData[type].find(x=>x.id>=req);
+ if(hit){
+  const f=total/pipeArea(hit.id)*100;
+  $("recommendSize").textContent=hit.name;
+  $("recommendDetail").textContent=`参考内径 ${hit.id.toFixed(2)}mm・計算占積率 ${f.toFixed(1)}%（上限 ${limit}%）`;
+ }else{
+  $("recommendSize").textContent="一覧サイズでは不足";
+  $("recommendDetail").textContent=`必要内径は ${req.toFixed(2)}mm。より大きい管または配管分割を検討してください。`;
+ }
+}
+function renderSizeList(total,limit){
+ const type=$("conduitType").value;if(type==="MANUAL")return;
+ $("sizeList").innerHTML=conduitData[type].map(x=>{
+  const a=pipeArea(x.id),f=total?total/a*100:0,ok=total&&f<=limit;
+  return `<tr><td><strong>${x.name}</strong></td><td>${x.id.toFixed(2)} mm</td><td>${a.toFixed(1)} mm²</td><td>${total?f.toFixed(1)+"%":"―"}</td><td>${total?`<span class="status ${ok?"ok":"ng"}">${ok?"適合":"超過"}</span>`:"―"}</td></tr>`;
+ }).join("");
+}
+function state(){
+ return {
+  version:3,project:$("project").value,limit:$("limit").value,customLimit:$("customLimit").value,
+  conduitType:$("conduitType").value,conduitSize:$("conduitSize").value,
+  manualName:$("manualName").value,manualId:$("manualId").value,
+  wires:getWires().map(w=>({typeKey:w.typeKey,sizeIndex:w.sizeIndex,count:w.count||1,manualLabel:w.manualLabel||"",manualDiameter:w.manualDiameter||""}))
+ };
+}
+function applyState(s){
+ if(!s)return;
+ if((Number(s.version)||0)<3&&Array.isArray(s.wires)){
+  const oldHpIndexMap={0:10,1:11,2:12,3:14,4:26,5:28,6:64};
+  s.wires=s.wires.map(w=>w&&w.typeKey==="HP"&&oldHpIndexMap[w.sizeIndex]!=null?{...w,sizeIndex:oldHpIndexMap[w.sizeIndex]}:w);
+ }
+ $("project").value=s.project||"";$("limit").value=s.limit||"32";$("customLimit").value=s.customLimit||32;
+ $("customLimitBox").classList.toggle("hidden",$("limit").value!=="custom");
+ $("conduitType").value=s.conduitType||"E";renderConduitSizes();
+ if(s.conduitSize!=null)$("conduitSize").value=s.conduitSize;
+ $("manualName").value=s.manualName||"";$("manualId").value=s.manualId||"";
+ rows.innerHTML="";(s.wires?.length?s.wires:[{}]).forEach(addCableRow);calculate();
+}
+function resultText(){
+ const p=currentPipe(),limit=getLimit(),w=getWires(),total=w.reduce((s,x)=>s+wireArea(x),0);
+ const fill=p?.id&&total?total/pipeArea(p.id)*100:0;
+ const req=total?Math.sqrt((4*total)/(PI*(limit/100))):0;
+ return [
+  "【配管サイズ計算】",`案件名：${$("project").value||"未入力"}`,
+  ...w.filter(x=>x.unitArea&&x.count).map(x=>`${x.name}：${wireDimension(x.item,x.manualDiameter)} × ${x.count}本`),
+  `電線合計面積：${total.toFixed(2)}mm²`,`判定上限：${limit}%`,`必要最小内径：${req?req.toFixed(2):"―"}mm`,
+  `確認管：${p?.name||"―"}（内径 ${p?.id?p.id.toFixed(2):"―"}mm）`,
+  `占積率：${fill?fill.toFixed(1):"―"}%`,`判定：${total&&p?.id?(fill<=limit?"適合":"超過"):"未入力"}`,
+  "※一次選定用。最終判断は現行内線規程・仕様書・メーカー資料で確認。"
+ ].join("\n");
+}
+
+// iPhoneのファイルプレビュー等ではlocalStorageがSecurityErrorになる場合があるため、
+// 保存機能の失敗で入力画面全体が停止しないように安全に扱う。
+function safeStorageGet(key){
+ try{return window.localStorage ? window.localStorage.getItem(key) : null;}
+ catch(e){return null;}
+}
+function safeStorageSet(key,value){
+ try{if(!window.localStorage)return false;window.localStorage.setItem(key,value);return true;}
+ catch(e){return false;}
+}
+function safeStorageRemove(key){
+ try{if(window.localStorage)window.localStorage.removeItem(key);return true;}
+ catch(e){return false;}
+}
+function initializeApp(){
+ // 保存データの読込みより先に必ず入力欄を表示する。
+ // これによりiPhoneのプレビュー画面でも電線・管サイズを選択できる。
+ rows.innerHTML="";
+ addCableRow();
+ renderConduitSizes();
+ const saved=safeStorageGet("haikanCheckerState");
+ if(saved){
+  try{applyState(JSON.parse(saved));}
+  catch(e){rows.innerHTML="";addCableRow();renderConduitSizes();}
+ }
+}
+
+$("addCable").onclick=()=>addCableRow();
+$("sampleCable").onclick=()=>{rows.innerHTML="";addCableRow({typeKey:"CV_3",sizeIndex:2,count:2});addCableRow({typeKey:"IV",sizeIndex:6,count:3});};
+$("clearCable").onclick=()=>{rows.innerHTML="";addCableRow();};
+$("limit").onchange=()=>{$("customLimitBox").classList.toggle("hidden",$("limit").value!=="custom");calculate();};
+$("customLimit").oninput=calculate;
+$("conduitType").onchange=renderConduitSizes;
+$("conduitSize").onchange=calculate;
+["project","manualName","manualId"].forEach(id=>$(id).addEventListener("input",calculate));
+$("saveLocal").onclick=()=>{const ok=safeStorageSet("haikanCheckerState",JSON.stringify(state()));$("saveMessage").textContent=ok?"この端末に保存しました。次回起動時に復元します。":"この表示方法では端末保存を利用できません。計算と選択はそのまま利用できます。";};
+$("copyResult").onclick=async()=>{
+ try{await navigator.clipboard.writeText(resultText());$("saveMessage").textContent="計算結果をコピーしました。";}
+ catch(e){prompt("下の内容をコピーしてください",resultText());}
+};
+$("exportCsv").onclick=()=>{
+ const s=state(),p=currentPipe(),limit=getLimit(),w=getWires(),total=w.reduce((a,x)=>a+wireArea(x),0),fill=p?.id&&total?total/pipeArea(p.id)*100:0;
+ const lines=[["案件名",s.project],["判定上限",limit+"%"],["管",p?.name||""],["管内径mm",p?.id||""],[],["電線名称","参考外形","本数","面積mm2"]];
+ w.forEach(x=>lines.push([x.name,wireDimension(x.item,x.manualDiameter),x.count,wireArea(x).toFixed(2)]));
+ lines.push([],["合計面積mm2",total.toFixed(2)],["占積率",fill?fill.toFixed(1)+"%":""],["判定",total&&p?.id?(fill<=limit?"適合":"超過"):"未入力"]);
+ const csv="\uFEFF"+lines.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="配管サイズ計算.csv";a.click();URL.revokeObjectURL(a.href);
+};
+$("printBtn").onclick=()=>window.print();
+$("resetAll").onclick=()=>{if(confirm("入力内容と端末保存データを全て消去しますか？")){safeStorageRemove("haikanCheckerState");rows.innerHTML="";$("project").value="";$("limit").value="32";$("conduitType").value="E";$("manualName").value="";$("manualId").value="";addCableRow();renderConduitSizes();$("saveMessage").textContent="入力内容をリセットしました。";}};
+
+initializeApp();
+
+</script>
+</body>
+</html>
