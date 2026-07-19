@@ -198,7 +198,7 @@ a{color:#086a53}
 </main>
 
 <footer><div class="foot-inner">
-  配管サイズチェッカー v1.4｜端末内保存のみ。入力内容を外部送信しません。
+  配管サイズチェッカー v1.5｜端末内保存のみ。入力内容を外部送信しません。
 </div></footer>
 
 <script>
@@ -227,18 +227,22 @@ const rows=$("cableRows");
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
 function typeOptions(selected=""){
  const groups={};wireCatalog.forEach(t=>(groups[t.group]??=[]).push(t));
- return Object.entries(groups).map(([g,list])=>`<optgroup label="${esc(g)}">${list.map(t=>`<option value="${t.key}" ${t.key===selected?"selected":""}>${esc(t.label)}</option>`).join("")}</optgroup>`).join("");
+ const placeholder=`<option value="" ${selected?"":"selected"}>電線種類を選択</option>`;
+ return placeholder+Object.entries(groups).map(([g,list])=>`<optgroup label="${esc(g)}">${list.map(t=>`<option value="${t.key}" ${t.key===selected?"selected":""}>${esc(t.label)}</option>`).join("")}</optgroup>`).join("");
 }
 function countOptions(selected=1){return Array.from({length:100},(_,i)=>i+1).map(n=>`<option value="${n}" ${n===Number(selected)?"selected":""}>${n}本</option>`).join("")}
 function sizeOptions(typeKey,selected=0){
- const type=wireCatalogMap[typeKey]||wireCatalog[0];
+ const type=wireCatalogMap[typeKey];
+ if(!type)return `<option value="" selected>先に電線種類を選択</option>`;
  return type.items.map((x,i)=>`<option value="${i}" ${i===Number(selected)?"selected":""}>${esc(x.label)}</option>`).join("");
 }
 function selectedWireItem(tr){
  const typeKey=tr.querySelector(".wire-type").value;
- const type=wireCatalogMap[typeKey]||wireCatalog[0];
- const idx=Number(tr.querySelector(".wire-size").value)||0;
- return {type,item:type.items[idx]||type.items[0],idx};
+ const type=wireCatalogMap[typeKey];
+ if(!type)return {type:null,item:null,idx:null};
+ const raw=tr.querySelector(".wire-size").value;
+ const idx=raw===""?null:Number(raw);
+ return {type,item:idx==null?null:(type.items[idx]||null),idx};
 }
 function wireItemArea(item,manualDiameter=0){
  if(!item)return 0;
@@ -257,17 +261,27 @@ function wireDimension(item,manualDiameter=0){
 }
 function refreshWireRow(tr,restore={}){
  const typeKey=tr.querySelector(".wire-type").value;
- const type=wireCatalogMap[typeKey]||wireCatalog[0];
+ const type=wireCatalogMap[typeKey];
  const size=tr.querySelector(".wire-size");
+ if(!type){
+  size.innerHTML=sizeOptions("",0);
+  size.disabled=true;
+  tr.querySelector(".wire-dimension").textContent="―";
+  tr.querySelector(".wire-subtotal").textContent="0.00";
+  calculate();
+  return;
+ }
+ size.disabled=false;
  const wanted=restore.sizeIndex!=null?restore.sizeIndex:0;
  size.innerHTML=sizeOptions(type.key,wanted);
  if(Number(wanted)>=type.items.length)size.value="0";
  updateWireRowMode(tr,restore);
 }
 function updateWireRowMode(tr,restore={}){
- const {type,item}=selectedWireItem(tr);
- const manual=item.shape==="manual";
+ const {item}=selectedWireItem(tr);
  const cell=tr.querySelector(".wire-dimension");
+ if(!item){cell.textContent="―";calculate();return;}
+ const manual=item.shape==="manual";
  const labelVal=restore.manualLabel??tr.dataset.manualLabel??"";
  const diaVal=restore.manualDiameter??tr.dataset.manualDiameter??"";
  if(manual){
@@ -278,12 +292,12 @@ function updateWireRowMode(tr,restore={}){
  }else cell.textContent=wireDimension(item);
  calculate();
 }
-function addCableRow(data={typeKey:"IV",sizeIndex:0,count:1,manualLabel:"",manualDiameter:""}){
+function addCableRow(data={typeKey:"",sizeIndex:0,count:1,manualLabel:"",manualDiameter:""}){
  // Old v1.0 saved data migration
  if(data.name!==undefined||data.diameter!==undefined){data={typeKey:"MANUAL",sizeIndex:0,count:data.count||1,manualLabel:data.name||"旧データ",manualDiameter:data.diameter||""};}
  const tr=document.createElement("tr");
  tr.dataset.manualLabel=data.manualLabel||"";tr.dataset.manualDiameter=data.manualDiameter||"";
- tr.innerHTML=`<td data-label="電線種類"><select class="wire-type" aria-label="電線種類">${typeOptions(data.typeKey||"IV")}</select></td>
+ tr.innerHTML=`<td data-label="電線種類"><select class="wire-type" aria-label="電線種類">${typeOptions(data.typeKey||"")}</select></td>
  <td data-label="サイズ"><select class="wire-size" aria-label="電線サイズ"></select></td>
  <td data-label="本数"><select class="wire-count" aria-label="本数">${countOptions(data.count||1)}</select></td>
  <td class="wire-dimension" data-label="参考外形"></td><td class="wire-subtotal" data-label="小計面積">0.00</td>
@@ -306,6 +320,7 @@ function getWires(){
   const {type,item,idx}=selectedWireItem(tr),count=Number(tr.querySelector(".wire-count").value)||0;
   const manualLabel=tr.querySelector(".manual-label")?.value||tr.dataset.manualLabel||"";
   const manualDiameter=Number(tr.querySelector(".manual-dia")?.value||tr.dataset.manualDiameter)||0;
+  if(!type||!item)return {typeKey:"",sizeIndex:null,name:"",item:null,manualLabel:"",manualDiameter:0,count,unitArea:0,tr};
   const name=item.shape==="manual"?(manualLabel||`${type.label}・手入力`):`${type.label} ${item.label}`;
   return {typeKey:type.key,sizeIndex:idx,name,item,manualLabel,manualDiameter,count,unitArea:wireItemArea(item,manualDiameter),tr};
  });
@@ -380,7 +395,7 @@ function renderSizeList(total,limit){
 }
 function state(){
  return {
-  version:3,project:$("project").value,limit:$("limit").value,customLimit:$("customLimit").value,
+  version:4,project:$("project").value,limit:$("limit").value,customLimit:$("customLimit").value,
   conduitType:$("conduitType").value,conduitSize:$("conduitSize").value,
   manualName:$("manualName").value,manualId:$("manualId").value,
   wires:getWires().map(w=>({typeKey:w.typeKey,sizeIndex:w.sizeIndex,count:w.count||1,manualLabel:w.manualLabel||"",manualDiameter:w.manualDiameter||""}))
