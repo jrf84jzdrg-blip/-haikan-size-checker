@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="配管サイズ">
-<title>配管サイズチェッカー v1.8</title>
+<title>配管サイズチェッカー v2.0</title>
 <style>
 :root{
   --bg:#f3f6f5;--card:#fff;--ink:#17221f;--muted:#60706a;--line:#d7e0dc;
@@ -204,7 +204,7 @@ a{color:#086a53}
 </main>
 
 <footer><div class="foot-inner">
-  配管サイズチェッカー v1.8｜端末内保存のみ。入力内容を外部送信しません。
+  配管サイズチェッカー v2.0｜端末内保存のみ。入力内容を外部送信しません。
 </div></footer>
 
 <script>
@@ -427,7 +427,7 @@ function renderSizeList(total,limit){
 }
 function state(){
  return {
-  version:5,project:$("project").value,limit:$("limit").value,customLimit:$("customLimit").value,
+  version:7,project:$("project").value,limit:$("limit").value,customLimit:$("customLimit").value,
   conduitType:$("conduitType").value,conduitSize:$("conduitSize").value,
   manualName:$("manualName").value,manualId:$("manualId").value,
   wires:getWires().map(w=>({typeKey:w.typeKey,sizeIndex:w.sizeIndex,count:w.count||1,manualLabel:w.manualLabel||"",manualDiameter:w.manualDiameter||""}))
@@ -435,11 +435,15 @@ function state(){
 }
 function applyState(s){
  if(!s)return;
- if((Number(s.version)||0)<3&&Array.isArray(s.wires)){
+ const savedVersion=Number(s.version)||0;
+ if(savedVersion<3&&Array.isArray(s.wires)){
   const oldHpIndexMap={0:10,1:11,2:12,3:14,4:26,5:28,6:64};
   s.wires=s.wires.map(w=>w&&w.typeKey==="HP"&&oldHpIndexMap[w.sizeIndex]!=null?{...w,sizeIndex:oldHpIndexMap[w.sizeIndex]}:w);
  }
- $("project").value=s.project||"";$("limit").value=s.limit||"32";$("customLimit").value=s.customLimit||32;
+ $("project").value=s.project||"";
+ // v2.0への更新時は、旧版で保存された48％・任意値を引き継がず32％を初期値にする。
+ $("limit").value=savedVersion<7?"32":(s.limit||"32");
+ $("customLimit").value=savedVersion<7?32:(s.customLimit||32);
  $("customLimitBox").classList.toggle("hidden",$("limit").value!=="custom");
  let savedConduitType=s.conduitType||"E";
  if(savedConduitType==="PF1") savedConduitType="PFS";
@@ -452,7 +456,15 @@ function applyState(s){
   $("conduitSize").value=String(savedIndex);
  }
  $("manualName").value=s.manualName||"";$("manualId").value=s.manualId||"";
- rows.innerHTML="";(s.wires?.length?s.wires:[{}]).forEach(addCableRow);calculate();
+ rows.innerHTML="";
+ // v2.0への更新時は、旧版に保存されていた電線行を初回だけリセット。
+ // 初期表示を「電線種類を選択」の未選択1段に統一する。
+ if(savedVersion<7){
+  addCableRow();
+ }else{
+  (s.wires?.length?s.wires:[{}]).forEach(addCableRow);
+ }
+ calculate();
 }
 function resultText(){
  const p=currentPipe(),limit=getLimit(),w=getWires(),total=w.reduce((s,x)=>s+wireArea(x),0);
