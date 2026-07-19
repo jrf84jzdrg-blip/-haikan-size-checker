@@ -28,6 +28,8 @@ label{display:block;font-size:12px;font-weight:700;color:#42534d;margin-bottom:4
 input,select,button,textarea{font:inherit}
 input,select{width:100%;min-height:44px;border:1px solid #becbc6;border-radius:10px;background:#fff;padding:9px 10px;color:var(--ink)}
 input:focus,select:focus{outline:3px solid rgba(11,107,82,.14);border-color:var(--main)}
+select:disabled{background:#f1f4f2;color:#78857f;opacity:1}
+
 button{border:0;border-radius:10px;min-height:43px;padding:8px 12px;font-weight:750;cursor:pointer}
 .btn-main{background:var(--main);color:#fff}.btn-sub{background:var(--main2);color:#075d48}.btn-light{background:#eef2f0;color:#34443e}.btn-danger{background:#fff0ee;color:var(--ng)}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
@@ -68,7 +70,7 @@ a{color:#086a53}
   .cable-table td::before{content:attr(data-label);font-size:12px;font-weight:750;color:#53655e}
   .cable-table td.no-print{display:block;padding:9px 0 0}
   .cable-table td.no-print::before{display:none}
-  .cable-table select,.cable-table input{width:100%;min-width:0!important;min-height:48px;font-size:16px;padding:9px 10px;position:relative;z-index:2;touch-action:manipulation;-webkit-appearance:menulist;appearance:auto}
+  .cable-table select,.cable-table input{width:100%;min-width:0!important;min-height:48px;font-size:16px;padding:9px 10px;position:relative;z-index:2;touch-action:auto;-webkit-appearance:menulist;appearance:menulist;pointer-events:auto}
   .cable-table .wire-dimension>div{display:grid!important;grid-template-columns:minmax(0,1fr) 102px;gap:6px!important;min-width:0!important;width:100%}
   .cable-table .icon-btn{width:100%;min-height:44px}
 }
@@ -198,7 +200,7 @@ a{color:#086a53}
 </main>
 
 <footer><div class="foot-inner">
-  配管サイズチェッカー v1.5｜端末内保存のみ。入力内容を外部送信しません。
+  配管サイズチェッカー v1.6｜端末内保存のみ。入力内容を外部送信しません。
 </div></footer>
 
 <script>
@@ -226,9 +228,10 @@ const $=id=>document.getElementById(id);
 const rows=$("cableRows");
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
 function typeOptions(selected=""){
- const groups={};wireCatalog.forEach(t=>(groups[t.group]??=[]).push(t));
- const placeholder=`<option value="" ${selected?"":"selected"}>電線種類を選択</option>`;
- return placeholder+Object.entries(groups).map(([g,list])=>`<optgroup label="${esc(g)}">${list.map(t=>`<option value="${t.key}" ${t.key===selected?"selected":""}>${esc(t.label)}</option>`).join("")}</optgroup>`).join("");
+ // iPhone Safariとの相性を優先し、optgroupを使わず単純な選択肢にする
+ const placeholder=`<option value=""${selected?"":" selected"}>電線種類を選択</option>`;
+ const options=wireCatalog.map(t=>`<option value="${t.key}"${t.key===selected?" selected":""}>【${esc(t.group)}】${esc(t.label)}</option>`).join("");
+ return placeholder+options;
 }
 function countOptions(selected=1){return Array.from({length:100},(_,i)=>i+1).map(n=>`<option value="${n}" ${n===Number(selected)?"selected":""}>${n}本</option>`).join("")}
 function sizeOptions(typeKey,selected=0){
@@ -303,11 +306,11 @@ function addCableRow(data={typeKey:"",sizeIndex:0,count:1,manualLabel:"",manualD
  <td class="wire-dimension" data-label="参考外形"></td><td class="wire-subtotal" data-label="小計面積">0.00</td>
  <td class="no-print"><button class="icon-btn" aria-label="この電線を削除">この電線を削除</button></td>`;
  const typeSelect=tr.querySelector(".wire-type"),sizeSelect=tr.querySelector(".wire-size"),countSelect=tr.querySelector(".wire-count");
- // iPhone Safariでは選択パネルが閉じた後に内容を更新すると安定する
- typeSelect.addEventListener("change",()=>setTimeout(()=>refreshWireRow(tr),0));
- sizeSelect.addEventListener("change",()=>setTimeout(()=>updateWireRowMode(tr),0));
+ typeSelect.value=data.typeKey||"";
+ // iPhone Safariではネイティブのchangeイベントを直接処理する
+ typeSelect.addEventListener("change",()=>refreshWireRow(tr));
+ sizeSelect.addEventListener("change",()=>updateWireRowMode(tr));
  countSelect.addEventListener("change",calculate);
- [typeSelect,sizeSelect,countSelect].forEach(s=>s.addEventListener("touchstart",e=>e.stopPropagation(),{passive:true}));
  tr.querySelector("button").addEventListener("click",()=>{tr.remove();if(!rows.children.length)addCableRow();calculate();});
  rows.appendChild(tr);refreshWireRow(tr,data);calculate();
 }
