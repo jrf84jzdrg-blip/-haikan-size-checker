@@ -7,7 +7,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>電圧降下チェッカー v1.5</title>
+<title>電圧降下チェッカー v1.7</title>
 <style>
 :root{
   --brand:#075d48;--brand2:#0d8065;--bg:#edf4f1;--card:#fff;--text:#17332b;
@@ -43,6 +43,17 @@ select:disabled,input:disabled{background:#eef3f1;color:#5d706a;opacity:1}
 .hint{font-size:11px;color:var(--muted);margin:6px 0 0}
 .cable-note{margin-top:9px;background:#f4f9f7;border:1px solid #cfe1da;border-radius:11px;padding:9px 10px;font-size:11px;color:#4b655d}
 .notice{background:#fff8df;border:1px solid #ecd79b;border-radius:12px;padding:10px 11px;font-size:12px;color:#725312}
+.limit-guide{margin-top:10px;background:#eaf6f1;border:1px solid #acd5c6;border-radius:12px;padding:11px 12px;font-size:12px;color:#31584d}
+.limit-guide strong{display:block;color:#075d48;font-size:14px;margin-bottom:3px}
+.standard-box{margin-top:12px;border:1px solid #d0dfda;border-radius:13px;background:#fafcfb;padding:12px}
+.standard-box h3{font-size:14px;color:#12483a;margin:0 0 7px}
+.standard-box p{font-size:12px;color:#4b655d;margin:7px 0}
+.guide-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:9px}
+.guide-table{width:100%;min-width:590px;border-collapse:collapse;font-size:11px;background:#fff}
+.guide-table th,.guide-table td{border:1px solid #cfded9;padding:7px 8px;text-align:center;vertical-align:middle}
+.guide-table th{background:#edf6f2;color:#31584d;font-weight:850}
+.guide-table td:first-child{text-align:left;font-weight:750}
+.emphasis{font-weight:900;color:#075d48}
 .result-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
 .metric{background:#f7faf9;border:1px solid #dce8e4;border-radius:13px;padding:12px;min-height:105px}
 .metric .k{font-size:11px;color:var(--muted);font-weight:700}
@@ -84,7 +95,7 @@ a{color:#086a53}
 <body>
 <header>
   <div class="inner">
-    <h1>電圧降下チェッカー <span class="badge">v1.5</span></h1>
+    <h1>電圧降下チェッカー <span class="badge">v1.7</span></h1>
     <div class="subtitle">線種・心数を選び、電流と片道距離を入力するだけで電線サイズを自動選定</div>
   </div>
 </header>
@@ -138,9 +149,12 @@ a{color:#086a53}
       </select>
     </div>
     <div>
-      <label>電線心数</label>
-      <div id="coreButtons" class="core-buttons" role="group" aria-label="電線心数"></div>
-      <select id="cores" class="hidden" aria-hidden="true" tabindex="-1"></select>
+      <label for="cores">電線心数</label>
+      <select id="cores">
+        <option value="2">2心</option>
+        <option value="3">3心</option>
+        <option value="4">4心</option>
+      </select>
     </div>
     <div class="unit-input">
       <label for="current">負荷電流</label>
@@ -154,7 +168,7 @@ a{color:#086a53}
     </div>
   </div>
   <div id="cableNote" class="cable-note">―</div>
-  <p class="hint">表示された心数ボタンをタップして選択します。心数を変更すると許容電流と推奨サイズを自動再計算します。</p>
+  <p class="hint">電線心数はプルダウンから選択します。線種を変更すると選べる心数が自動で切り替わり、許容電流と推奨サイズを再計算します。</p>
 
   <div class="grid" style="margin-top:11px">
     <div>
@@ -173,19 +187,51 @@ a{color:#086a53}
 </section>
 
 <section class="card">
-  <h2>3．判定条件</h2>
+  <h2>3．判定条件（通常は2%）</h2>
   <div class="grid">
+    <div>
+      <label for="limitPreset">判定基準</label>
+      <select id="limitPreset">
+        <option value="normal2" selected>通常・分岐回路（2%）</option>
+        <option value="utilityFeeder2">低圧受電の幹線・60m以下（2%）</option>
+        <option value="transformerFeeder3">構内変圧器の幹線・60m以下（3%）</option>
+        <option value="utility120">低圧受電・全体60m超～120m以下（4%）</option>
+        <option value="utility200">低圧受電・全体120m超～200m以下（5%）</option>
+        <option value="utilityOver">低圧受電・全体200m超（6%）</option>
+        <option value="transformer120">構内変圧器・全体60m超～120m以下（5%）</option>
+        <option value="transformer200">構内変圧器・全体120m超～200m以下（6%）</option>
+        <option value="transformerOver">構内変圧器・全体200m超（7%）</option>
+        <option value="custom">任意設定</option>
+      </select>
+    </div>
     <div class="unit-input">
       <label for="limit">許容電圧降下率</label>
       <input id="limit" type="number" min="0.1" max="30" step="0.1" inputmode="decimal" value="2">
       <span class="unit">%</span>
     </div>
-    <div>
-      <label for="project">案件名・回路名（任意）</label>
-      <input id="project" placeholder="例：1階動力盤～空調機">
-    </div>
   </div>
-  <p class="hint">許容電流と電圧降下の両方を満たす最小サイズを選定します。</p>
+  <div id="limitGuide" class="limit-guide"><strong>通常は2%以下</strong>分電盤から機器・コンセントまでの分岐回路など、迷った場合は2%以下で選定します。</div>
+
+  <div style="margin-top:11px">
+    <label for="project">案件名・回路名（任意）</label>
+    <input id="project" placeholder="例：1階動力盤～空調機">
+  </div>
+
+  <div class="standard-box">
+    <h3>何％まで大丈夫？</h3>
+    <p><span class="emphasis">通常は2%以下</span>です。分岐回路は2%以下、電気事業者から低圧受電する幹線も60m以下なら2%以下を基本にします。構内変圧器から供給する幹線は、60m以下なら3%以下を使用できる場合があります。</p>
+    <div class="guide-table-wrap">
+      <table class="guide-table">
+        <thead><tr><th>判定する範囲</th><th>60m以下</th><th>60m超～120m以下</th><th>120m超～200m以下</th><th>200m超</th></tr></thead>
+        <tbody>
+          <tr><td>電気事業者から低圧受電</td><td>幹線2%・分岐2%</td><td>全体4%以下</td><td>全体5%以下</td><td>全体6%以下</td></tr>
+          <tr><td>構内変圧器から供給</td><td>幹線3%・分岐2%</td><td>全体5%以下</td><td>全体6%以下</td><td>全体7%以下</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>注意：</strong>60mを超える4～7%は、供給点から最遠端の負荷までの<strong>幹線＋分岐回路の合計</strong>に使う基準です。分電盤から機器までの1区間だけに、安易に4～7%を設定しないでください。照明、電子機器、制御回路、モーター始動時などは、基準内でも電圧低下の影響を受けるため余裕を持たせます。</p>
+  </div>
+  <p class="hint">許容電流と選択した電圧降下率の両方を満たす最小サイズを選定します。</p>
 </section>
 
 <section class="card">
@@ -274,19 +320,43 @@ a{color:#086a53}
     <p class="hint"><a href="https://www.swcc.co.jp/jpn/products/tec_information/pdf/impedance.pdf" target="_blank" rel="noopener">参考：SWCC「インピーダンス・電圧降下」</a></p>
   </details>
   <details>
+    <summary>判定条件の考え方</summary>
+    <p class="hint"><strong>通常設定：</strong>迷った場合や、分電盤から機器までの一般的な分岐回路は2%以下に設定します。</p>
+    <p class="hint"><strong>3%設定：</strong>構内変圧器から供給する幹線で、供給点から最遠端までのこう長が60m以下の場合に使用できる基準です。分岐回路は2%以下が基本です。</p>
+    <p class="hint"><strong>4～7%設定：</strong>こう長が60mを超えるとき、供給点から最遠端負荷までの全体電圧降下として適用します。途中の幹線や分岐回路だけを計算するときは、全体の電圧降下配分を確認してください。</p>
+    <p class="hint"><a href="https://www.fujikura-dia.co.jp/tech/documents/voltage-drop.php" target="_blank" rel="noopener">参考：フジクラ・ダイヤケーブル「電圧降下」</a> ／ <a href="https://jesc.gr.jp/jesc-assent/private/jesc_e0005_22.html" target="_blank" rel="noopener">JESC E0005（内線規程 JEAC 8001-2022）</a></p>
+  </details>
+  <details>
     <summary>iPhoneでアプリのように使う</summary>
     <p class="hint">Safariで開き、共有ボタン →「ホーム画面に追加」で起動アイコンを作れます。HTMLファイル単体でオフライン計算できます。</p>
   </details>
 </section>
 </main>
 
-<footer>電圧降下チェッカー v1.5｜入力内容は端末内だけに保存され、外部へ送信しません。</footer>
+<footer>電圧降下チェッカー v1.7｜入力内容は端末内だけに保存され、外部へ送信しません。</footer>
 
 <script>
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const ids=['circuit','voltage','cableType','cores','current','length','size','autoSelect','parallel','temperature','ampFactor','limit','project','advancedOn','pf','reactance'];
+const ids=['circuit','voltage','cableType','cores','current','length','size','autoSelect','parallel','temperature','ampFactor','limitPreset','limit','project','advancedOn','pf','reactance'];
+const limitPresetData={
+  normal2:{value:2,title:'通常は2%以下',guide:'分電盤から機器・コンセントまでの一般的な分岐回路など、迷った場合は2%以下で選定します。'},
+  utilityFeeder2:{value:2,title:'低圧受電の幹線は2%以下',guide:'電気事業者から低圧で受電し、供給点から最遠端までのこう長が60m以下の場合の幹線基準です。'},
+  transformerFeeder3:{value:3,title:'構内変圧器の幹線は3%以下',guide:'電気使用場所内の変圧器から供給し、こう長が60m以下の場合の幹線基準です。分岐回路は2%以下が基本です。'},
+  utility120:{value:4,title:'全体で4%以下',guide:'低圧受電で、供給点から最遠端負荷までの全こう長が60m超～120m以下の場合の合計基準です。'},
+  utility200:{value:5,title:'全体で5%以下',guide:'低圧受電で、供給点から最遠端負荷までの全こう長が120m超～200m以下の場合の合計基準です。'},
+  utilityOver:{value:6,title:'全体で6%以下',guide:'低圧受電で、供給点から最遠端負荷までの全こう長が200mを超える場合の合計基準です。'},
+  transformer120:{value:5,title:'全体で5%以下',guide:'構内変圧器から供給し、供給点から最遠端負荷までの全こう長が60m超～120m以下の場合の合計基準です。'},
+  transformer200:{value:6,title:'全体で6%以下',guide:'構内変圧器から供給し、供給点から最遠端負荷までの全こう長が120m超～200m以下の場合の合計基準です。'},
+  transformerOver:{value:7,title:'全体で7%以下',guide:'構内変圧器から供給し、供給点から最遠端負荷までの全こう長が200mを超える場合の合計基準です。'},
+  custom:{value:null,title:'任意設定',guide:'設計条件や機器仕様に基づく任意値です。4～7%は長距離配線の全体基準なので、1区間だけの判定には注意してください。'}
+};
+function updateLimitGuide(){
+  const p=limitPresetData[$('limitPreset').value]||limitPresetData.custom;
+  $('limitGuide').innerHTML=`<strong>${p.title}</strong>${p.guide}`;
+}
+function limitPresetLabel(){const e=$('limitPreset');return e.options[e.selectedIndex]?.text||'任意設定'}
 const circuitData={
   ac1p2w:{name:'単相2線式',k:2,defaultV:100,core:'2'},
   ac1p3w_ln:{name:'単相3線式・対中性線',k:1,defaultV:100,core:'3'},
@@ -337,7 +407,8 @@ const cableTypes={
 cableTypes.em_ce.sizes=cableTypes.cv.sizes.map(x=>({...x,amp:{...x.amp}}));
 cableTypes.em_cet.sizes=cableTypes.cvt.sizes.map(x=>({...x}));
 
-const storageKey='voltageDropChecker_v15';
+const storageKey='voltageDropChecker_v17';
+const oldStorageKey='voltageDropChecker_v16';
 let lastCircuit=$('circuit').value;
 function num(id){const v=parseFloat($(id).value);return Number.isFinite(v)?v:0}
 function fmt(v,d=2){return Number.isFinite(v)?v.toLocaleString('ja-JP',{minimumFractionDigits:d,maximumFractionDigits:d}):'―'}
@@ -382,26 +453,7 @@ function findRecommendation(allowedV){
   }
   return null;
 }
-function renderCoreButtons(){
-  const box=$('coreButtons');
-  const cable=getCable();
-  box.innerHTML='';
-  Array.from($('cores').options).forEach(opt=>{
-    const b=document.createElement('button');
-    b.type='button';
-    b.className='core-btn'+(opt.value===$('cores').value?' active':'')+(cable.coreMode==='fixed'?' fixed':'');
-    b.textContent=opt.textContent;
-    b.setAttribute('aria-pressed',opt.value===$('cores').value?'true':'false');
-    if(cable.coreMode!=='fixed'){
-      b.addEventListener('click',()=>{
-        $('cores').value=opt.value;
-        renderCoreButtons();
-        calculate();
-      });
-    }
-    box.appendChild(b);
-  });
-}
+function renderCoreButtons(){}
 function updateCableUI(preferredSize){
   const cable=getCable();
   const oldCore=$('cores').value;
@@ -428,6 +480,7 @@ function summaryText(data){
     `回路方式：${data.circuit.name}　使用電圧：${fmt(data.v,0)}V`,
     `電線種類：${getCable().name}　電線心数：${coreLabel($('cores').value)}`,
     `負荷電流：${fmt(data.i,1)}A　片道距離：${fmt(data.l,1)}m`,
+    `判定基準：${limitPresetLabel()} ／ 許容 ${fmt(data.limit,1)}%`,
     `選定電線：${cableLabel(data.size)}`,
     `許容電流：${fmt(data.ampacity,1)}A（${data.ampOk?'適合':'不足'}）`,
     `電圧降下：${fmt(data.drop,2)}V（${fmt(data.pct,2)}%）／許容 ${fmt(data.limit,1)}%（${data.dropOk?'適合':'超過'}）`,
@@ -488,19 +541,21 @@ function save(){
 }
 function load(){
   try{
-    const raw=localStorage.getItem(storageKey);if(!raw)return null;
+    const raw=localStorage.getItem(storageKey)||localStorage.getItem(oldStorageKey);if(!raw)return null;
     return JSON.parse(raw);
   }catch(e){return null}
 }
 function applyLoaded(d){
   if(!d)return;
-  ['circuit','voltage','cableType','current','length','autoSelect','parallel','temperature','ampFactor','limit','project','advancedOn','pf','reactance'].forEach(id=>{
+  ['circuit','voltage','cableType','current','length','autoSelect','parallel','temperature','ampFactor','limitPreset','limit','project','advancedOn','pf','reactance'].forEach(id=>{
     if(d[id]===undefined)return;$(id).type==='checkbox'?$(id).checked=!!d[id]:$(id).value=d[id];
   });
   updateCableUI(d.size);
   if(d.cores!==undefined&&Array.from($('cores').options).some(o=>o.value===d.cores))$('cores').value=d.cores;
   renderCoreButtons();
   if(d.size!==undefined&&Array.from($('size').options).some(o=>o.value===d.size))$('size').value=d.size;
+  if(!limitPresetData[$('limitPreset').value])$('limitPreset').value='normal2';
+  updateLimitGuide();
   lastCircuit=$('circuit').value;
 }
 function setCircuitVoltage(){
@@ -514,17 +569,19 @@ function setCircuitVoltage(){
 $('circuit').addEventListener('change',setCircuitVoltage);
 $('cableType').addEventListener('change',()=>{updateCableUI();calculate()});
 ['cores','size','autoSelect','parallel','temperature','advancedOn'].forEach(id=>$(id).addEventListener('change',calculate));
-['voltage','current','length','ampFactor','limit','project','pf','reactance'].forEach(id=>$(id).addEventListener('input',calculate));
+['voltage','current','length','ampFactor','project','pf','reactance'].forEach(id=>$(id).addEventListener('input',calculate));
+$('limitPreset').addEventListener('change',()=>{const p=limitPresetData[$('limitPreset').value];if(p&&p.value!==null)$('limit').value=p.value;updateLimitGuide();calculate()});
+$('limit').addEventListener('input',()=>{const p=limitPresetData[$('limitPreset').value];if(p&&p.value!==null&&Math.abs(num('limit')-p.value)>1e-9)$('limitPreset').value='custom';updateLimitGuide();calculate()});
 document.querySelectorAll('[data-voltage]').forEach(b=>b.addEventListener('click',()=>{$('voltage').value=b.dataset.voltage;calculate()}));
 $('sample').addEventListener('click',()=>{
   $('circuit').value='ac1p2w';lastCircuit='ac1p2w';$('voltage').value='100';$('cableType').value='vvf';updateCableUI('d2.6');$('cores').value='2';renderCoreButtons();
-  $('current').value='15';$('length').value='15';$('autoSelect').checked=true;$('parallel').value='1';$('temperature').value='20';$('ampFactor').value='1.00';$('limit').value='2';$('project').value='入力例';$('advancedOn').checked=false;calculate();
+  $('current').value='15';$('length').value='15';$('autoSelect').checked=true;$('parallel').value='1';$('temperature').value='20';$('ampFactor').value='1.00';$('limitPreset').value='normal2';$('limit').value='2';updateLimitGuide();$('project').value='入力例';$('advancedOn').checked=false;calculate();
 });
 $('reset').addEventListener('click',()=>{
   if(!confirm('入力内容をすべてリセットしますか？'))return;
-  try{localStorage.removeItem(storageKey)}catch(e){}
+  try{localStorage.removeItem(storageKey);localStorage.removeItem(oldStorageKey)}catch(e){}
   $('circuit').value='ac1p2w';lastCircuit='ac1p2w';$('voltage').value='100';$('cableType').value='vvf';updateCableUI();$('cores').value='2';renderCoreButtons();
-  $('current').value='';$('length').value='';$('autoSelect').checked=true;$('parallel').value='1';$('temperature').value='20';$('ampFactor').value='1.00';$('limit').value='2';$('project').value='';$('advancedOn').checked=false;$('pf').value='0.85';$('reactance').value='0.08';calculate();
+  $('current').value='';$('length').value='';$('autoSelect').checked=true;$('parallel').value='1';$('temperature').value='20';$('ampFactor').value='1.00';$('limitPreset').value='normal2';$('limit').value='2';updateLimitGuide();$('project').value='';$('advancedOn').checked=false;$('pf').value='0.85';$('reactance').value='0.08';calculate();
 });
 $('copy').addEventListener('click',async()=>{
   const text=$('summary').textContent;
@@ -533,7 +590,7 @@ $('copy').addEventListener('click',async()=>{
 });
 $('print').addEventListener('click',()=>window.print());
 const loaded=load();
-if(loaded)applyLoaded(loaded);else updateCableUI();
+if(loaded)applyLoaded(loaded);else{updateCableUI();$('limitPreset').value='normal2';updateLimitGuide()}
 calculate();
 })();
 </script>
