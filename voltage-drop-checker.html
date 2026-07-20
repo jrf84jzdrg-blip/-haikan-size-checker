@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#075d48">
-<title>電圧降下チェッカー v1.3</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>電圧降下チェッカー v1.5</title>
 <style>
 :root{
   --brand:#075d48;--brand2:#0d8065;--bg:#edf4f1;--card:#fff;--text:#17332b;
@@ -33,6 +36,10 @@ select:disabled,input:disabled{background:#eef3f1;color:#5d706a;opacity:1}
 .unit-input{position:relative}.unit-input input{padding-right:46px}.unit{position:absolute;right:12px;bottom:13px;color:var(--muted);font-size:13px;pointer-events:none}
 .quick-voltage{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
 .quick-voltage button{border:1px solid #bfd1ca;background:#f6faf8;color:#31584d;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:750;min-height:32px}
+.core-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.core-btn{width:100%;min-height:48px;border:1px solid #bfcfc9;background:#fff;color:#31584d;border-radius:11px;padding:8px 6px;font-size:14px;font-weight:800;cursor:pointer}
+.core-btn.active{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 0 0 3px rgba(13,128,101,.13)}
+.core-btn.fixed{background:#e9f2ef;color:#31584d;border-color:#bfd1ca;cursor:default}
 .hint{font-size:11px;color:var(--muted);margin:6px 0 0}
 .cable-note{margin-top:9px;background:#f4f9f7;border:1px solid #cfe1da;border-radius:11px;padding:9px 10px;font-size:11px;color:#4b655d}
 .notice{background:#fff8df;border:1px solid #ecd79b;border-radius:12px;padding:10px 11px;font-size:12px;color:#725312}
@@ -66,7 +73,7 @@ a{color:#086a53}
   h1{font-size:20px}.card{padding:13px;border-radius:14px}.metric{min-height:94px}
   .result-grid{grid-template-columns:1fr 1fr}.metric .v{font-size:22px}
 }
-@media(max-width:430px){.grid4,.result-grid{grid-template-columns:1fr}.actions button{flex:1 1 46%}}
+@media(max-width:430px){.grid4,.result-grid{grid-template-columns:1fr}.actions button{flex:1 1 46%}.core-buttons{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media print{
   header{position:static;background:#fff;color:#000;box-shadow:none;border-bottom:2px solid #000}
   body{background:#fff}.card{box-shadow:none;break-inside:avoid}.no-print{display:none!important}
@@ -77,7 +84,7 @@ a{color:#086a53}
 <body>
 <header>
   <div class="inner">
-    <h1>電圧降下チェッカー <span class="badge">v1.3</span></h1>
+    <h1>電圧降下チェッカー <span class="badge">v1.5</span></h1>
     <div class="subtitle">線種・心数を選び、電流と片道距離を入力するだけで電線サイズを自動選定</div>
   </div>
 </header>
@@ -124,13 +131,16 @@ a{color:#086a53}
         <option value="em_cet">EM-CET（エコ3条より）</option>
         <option value="iv_solid">IV（単線）</option>
         <option value="iv_stranded">IV（より線）</option>
-        <option value="hiv_solid">HIV・EM-IE（単線）</option>
-        <option value="hiv_stranded">HIV・EM-IE（より線）</option>
+        <option value="hiv_solid">HIV（単線）</option>
+        <option value="hiv_stranded">HIV（より線）</option>
+        <option value="em_ie_solid">EM-IE（単線）</option>
+        <option value="em_ie_stranded">EM-IE（より線）</option>
       </select>
     </div>
     <div>
-      <label for="cores">電線心数</label>
-      <select id="cores"></select>
+      <label>電線心数</label>
+      <div id="coreButtons" class="core-buttons" role="group" aria-label="電線心数"></div>
+      <select id="cores" class="hidden" aria-hidden="true" tabindex="-1"></select>
     </div>
     <div class="unit-input">
       <label for="current">負荷電流</label>
@@ -144,7 +154,7 @@ a{color:#086a53}
     </div>
   </div>
   <div id="cableNote" class="cable-note">―</div>
-  <p class="hint">線種を変更すると、その線種で選べる心数だけが表示されます。心数を変更すると許容電流と推奨サイズを再計算します。</p>
+  <p class="hint">表示された心数ボタンをタップして選択します。心数を変更すると許容電流と推奨サイズを自動再計算します。</p>
 
   <div class="grid" style="margin-top:11px">
     <div>
@@ -270,7 +280,7 @@ a{color:#086a53}
 </section>
 </main>
 
-<footer>電圧降下チェッカー v1.3｜入力内容は端末内だけに保存され、外部へ送信しません。</footer>
+<footer>電圧降下チェッカー v1.5｜入力内容は端末内だけに保存され、外部へ送信しません。</footer>
 
 <script>
 (()=>{
@@ -311,23 +321,29 @@ const cableTypes={
   iv_stranded:{name:'IV（より線）',coreMode:'select',cores:['pipe2','pipe3'],note:'周囲温度30℃、同一管・線ぴ・ダクト内の電線数3本以下。',sizes:[
     s('2',2,'2mm²',18),s('3.5',3.5,'3.5mm²',25),s('5.5',5.5,'5.5mm²',34),s('8',8,'8mm²',42),s('14',14,'14mm²',61),s('22',22,'22mm²',80),s('38',38,'38mm²',113),s('60',60,'60mm²',152),s('100',100,'100mm²',208),s('150',150,'150mm²',276),s('200',200,'200mm²',328),s('250',250,'250mm²',389),s('325',325,'325mm²',455)
   ]},
-  hiv_solid:{name:'HIV・EM-IE（単線）',coreMode:'select',cores:['pipe2','pipe3'],note:'周囲温度30℃、同一管・線ぴ・ダクト内の電線数3本以下。',sizes:[
+  hiv_solid:{name:'HIV（単線）',coreMode:'select',cores:['pipe2','pipe3'],note:'周囲温度30℃、同一管・線ぴ・ダクト内の電線数3本以下。',sizes:[
     s('d1.6',2.0106,'1.6mm',23),s('d2.0',3.1416,'2.0mm',29),s('d2.6',5.3093,'2.6mm',40),s('d3.2',8.0425,'3.2mm',52)
   ]},
-  hiv_stranded:{name:'HIV・EM-IE（より線）',coreMode:'select',cores:['pipe2','pipe3'],note:'周囲温度30℃、同一管・線ぴ・ダクト内の電線数3本以下。',sizes:[
+  hiv_stranded:{name:'HIV（より線）',coreMode:'select',cores:['pipe2','pipe3'],note:'周囲温度30℃、同一管・線ぴ・ダクト内の電線数3本以下。',sizes:[
+    s('2',2,'2mm²',23),s('3.5',3.5,'3.5mm²',31),s('5.5',5.5,'5.5mm²',41),s('8',8,'8mm²',52),s('14',14,'14mm²',75),s('22',22,'22mm²',98),s('38',38,'38mm²',138),s('60',60,'60mm²',185),s('100',100,'100mm²',254),s('150',150,'150mm²',337),s('200',200,'200mm²',400),s('250',250,'250mm²',474),s('325',325,'325mm²',555)
+  ]},
+  em_ie_solid:{name:'EM-IE（単線）',coreMode:'select',cores:['pipe2','pipe3'],note:'周囲温度30℃、同一管・線ぴ・ダクト内の電線数3本以下。HIVと同じ参考許容電流値を使用。',sizes:[
+    s('d1.6',2.0106,'1.6mm',23),s('d2.0',3.1416,'2.0mm',29),s('d2.6',5.3093,'2.6mm',40),s('d3.2',8.0425,'3.2mm',52)
+  ]},
+  em_ie_stranded:{name:'EM-IE（より線）',coreMode:'select',cores:['pipe2','pipe3'],note:'周囲温度30℃、同一管・線ぴ・ダクト内の電線数3本以下。HIVと同じ参考許容電流値を使用。',sizes:[
     s('2',2,'2mm²',23),s('3.5',3.5,'3.5mm²',31),s('5.5',5.5,'5.5mm²',41),s('8',8,'8mm²',52),s('14',14,'14mm²',75),s('22',22,'22mm²',98),s('38',38,'38mm²',138),s('60',60,'60mm²',185),s('100',100,'100mm²',254),s('150',150,'150mm²',337),s('200',200,'200mm²',400),s('250',250,'250mm²',474),s('325',325,'325mm²',555)
   ]}
 };
 cableTypes.em_ce.sizes=cableTypes.cv.sizes.map(x=>({...x,amp:{...x.amp}}));
 cableTypes.em_cet.sizes=cableTypes.cvt.sizes.map(x=>({...x}));
 
-const storageKey='voltageDropChecker_v13';
+const storageKey='voltageDropChecker_v15';
 let lastCircuit=$('circuit').value;
 function num(id){const v=parseFloat($(id).value);return Number.isFinite(v)?v:0}
 function fmt(v,d=2){return Number.isFinite(v)?v.toLocaleString('ja-JP',{minimumFractionDigits:d,maximumFractionDigits:d}):'―'}
 function getCable(){return cableTypes[$('cableType').value]}
 function getSizeByKey(key){return getCable().sizes.find(x=>x.key===key)||null}
-function coreLabel(v){return v==='2'?'2心':v==='3'?'3心':v==='4'?'4心（3心表参考）':v==='3t'?'3心（3条より）':v==='pipe2'?'単心線 2本':v==='pipe3'?'単心線 3本':'―'}
+function coreLabel(v){return v==='2'?'2心':v==='3'?'3心':v==='4'?'4心':v==='3t'?'3心（3条より・固定）':v==='pipe2'?'2心分（単心線2本）':v==='pipe3'?'3心分（単心線3本）':'―'}
 function ampacityOf(size){
   if(!size)return 0;
   const c=getCable();
@@ -366,6 +382,26 @@ function findRecommendation(allowedV){
   }
   return null;
 }
+function renderCoreButtons(){
+  const box=$('coreButtons');
+  const cable=getCable();
+  box.innerHTML='';
+  Array.from($('cores').options).forEach(opt=>{
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='core-btn'+(opt.value===$('cores').value?' active':'')+(cable.coreMode==='fixed'?' fixed':'');
+    b.textContent=opt.textContent;
+    b.setAttribute('aria-pressed',opt.value===$('cores').value?'true':'false');
+    if(cable.coreMode!=='fixed'){
+      b.addEventListener('click',()=>{
+        $('cores').value=opt.value;
+        renderCoreButtons();
+        calculate();
+      });
+    }
+    box.appendChild(b);
+  });
+}
 function updateCableUI(preferredSize){
   const cable=getCable();
   const oldCore=$('cores').value;
@@ -378,11 +414,12 @@ function updateCableUI(preferredSize){
     const o=document.createElement('option');o.value=cable.fixedValue;o.textContent=coreLabel(cable.fixedValue);$('cores').appendChild(o);
   }
   $('cores').disabled=false;
+  renderCoreButtons();
   const oldSize=preferredSize||$('size').value;
   $('size').innerHTML='';
   cable.sizes.forEach(size=>{const o=document.createElement('option');o.value=size.key;o.textContent=size.label;$('size').appendChild(o)});
   $('size').value=cable.sizes.some(x=>x.key===oldSize)?oldSize:cable.sizes[0].key;
-  $('cableNote').textContent=`${cable.name}：${cable.note}`;
+  $('cableNote').textContent=`${cable.name}：${cable.note}${cable.coreMode==='fixed'?' 心数は構造上3心固定です。':''}`;
 }
 function summaryText(data){
   if(!data.valid)return '電流と距離を入力すると自動判定します。';
@@ -462,6 +499,7 @@ function applyLoaded(d){
   });
   updateCableUI(d.size);
   if(d.cores!==undefined&&Array.from($('cores').options).some(o=>o.value===d.cores))$('cores').value=d.cores;
+  renderCoreButtons();
   if(d.size!==undefined&&Array.from($('size').options).some(o=>o.value===d.size))$('size').value=d.size;
   lastCircuit=$('circuit').value;
 }
@@ -470,6 +508,7 @@ function setCircuitVoltage(){
   if(val!==lastCircuit){$('voltage').value=circuitData[val].defaultV;lastCircuit=val}
   const cable=getCable();
   if(cable.coreMode==='select'&&cable.cores.includes(circuitData[val].core))$('cores').value=circuitData[val].core;
+  renderCoreButtons();
   calculate();
 }
 $('circuit').addEventListener('change',setCircuitVoltage);
@@ -478,13 +517,13 @@ $('cableType').addEventListener('change',()=>{updateCableUI();calculate()});
 ['voltage','current','length','ampFactor','limit','project','pf','reactance'].forEach(id=>$(id).addEventListener('input',calculate));
 document.querySelectorAll('[data-voltage]').forEach(b=>b.addEventListener('click',()=>{$('voltage').value=b.dataset.voltage;calculate()}));
 $('sample').addEventListener('click',()=>{
-  $('circuit').value='ac1p2w';lastCircuit='ac1p2w';$('voltage').value='100';$('cableType').value='vvf';updateCableUI('d2.6');$('cores').value='2';
+  $('circuit').value='ac1p2w';lastCircuit='ac1p2w';$('voltage').value='100';$('cableType').value='vvf';updateCableUI('d2.6');$('cores').value='2';renderCoreButtons();
   $('current').value='15';$('length').value='15';$('autoSelect').checked=true;$('parallel').value='1';$('temperature').value='20';$('ampFactor').value='1.00';$('limit').value='2';$('project').value='入力例';$('advancedOn').checked=false;calculate();
 });
 $('reset').addEventListener('click',()=>{
   if(!confirm('入力内容をすべてリセットしますか？'))return;
   try{localStorage.removeItem(storageKey)}catch(e){}
-  $('circuit').value='ac1p2w';lastCircuit='ac1p2w';$('voltage').value='100';$('cableType').value='vvf';updateCableUI();$('cores').value='2';
+  $('circuit').value='ac1p2w';lastCircuit='ac1p2w';$('voltage').value='100';$('cableType').value='vvf';updateCableUI();$('cores').value='2';renderCoreButtons();
   $('current').value='';$('length').value='';$('autoSelect').checked=true;$('parallel').value='1';$('temperature').value='20';$('ampFactor').value='1.00';$('limit').value='2';$('project').value='';$('advancedOn').checked=false;$('pf').value='0.85';$('reactance').value='0.08';calculate();
 });
 $('copy').addEventListener('click',async()=>{
